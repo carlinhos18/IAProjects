@@ -64,8 +64,8 @@ def genFirstRandom()->list:#Podiamos meter greedy choice
 
 #nos podemos dar swap, 
 #lista de livrarias por ordem de signup,ler livros que nao tenham sido scaned por ordem de valor 
-#TEMPORARIO
-def hill_climbing_stochastic_choice(prob:int):
+
+def hill_climbing_stochastic_choice(prob:float):
     cur=genFirstRandom()
     score=cal_score(cur)
     i=0
