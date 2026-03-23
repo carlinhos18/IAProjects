@@ -7,10 +7,11 @@ from classes import Library,Book
 
 #heuristica para a selecao
 def heuristic(lib:Library, deadline:int, curr_day:int, books_scanned):
-    days_left = deadline - curr_day 
+    days_left = deadline - curr_day - lib.sign_up_time
     #se nao da para dar o sign up, cortamos o path
-    if days_left <= lib.sign_up_time:
+    if days_left <= 0:
         return -1;
+
 
     max_books = days_left * lib.shipping_cap
 
