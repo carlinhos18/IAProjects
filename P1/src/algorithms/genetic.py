@@ -10,7 +10,7 @@ def heuristic(lib:Library, deadline:int, curr_day:int, books_scanned):
     days_left = deadline - curr_day - lib.sign_up_time
     #se nao da para dar o sign up, cortamos o path
     if days_left <= 0:
-        return -1;
+        return -1
 
 
     max_books = days_left * lib.shipping_cap
@@ -22,7 +22,7 @@ def heuristic(lib:Library, deadline:int, curr_day:int, books_scanned):
         )[:max_books]
     # se nao ha livros, cortamos o path
     if not unique_books:
-        return -1;
+        return -1
 
     score = sum(book.score for book in unique_books)
     return score
