@@ -11,7 +11,6 @@ from PyQt5.QtWidgets import (
     QGraphicsView,
     QGraphicsScene,
     QSpinBox,
-    QPlainTextEdit,
 )
 from PyQt5.QtGui import QPixmap, QFont, QCursor, QColor, QPen, QBrush
 from PyQt5 import QtGui, QtCore
@@ -258,6 +257,10 @@ def show_result_visualization(result):
     graph.setDragMode(QGraphicsView.ScrollHandDrag)
     page_layout.addWidget(graph, 1)
 
+    score_header = QLabel(f'Algorithm: {result["algorithm_name"].replace("_", " ").title()} | Total Score: {result["score"]}')
+    score_header.setStyleSheet('font-size: 16px; font-weight: bold; color: #000008; background: rgba(255,255,255,0.1); padding: 10px 12px; border-radius: 8px;')
+    page_layout.addWidget(score_header)
+
     legend = QLabel(
         'Bar description: Orange horizontal bar = library signup period (days spent preparing that library).\n'
         'Green vertical bars = books shipped that day for that library; taller green bar means more books sent on that day.'
@@ -266,16 +269,58 @@ def show_result_visualization(result):
     legend.setWordWrap(True)
     page_layout.addWidget(legend)
 
+    all_rows = viz['library_summary']
+    libs_per_page = 10
+    total_pages = max(1, (len(all_rows) + libs_per_page - 1) // libs_per_page)
+    total_days = max(1, result['deadline'])
+    days_per_page = 120
+    total_day_pages = max(1, (total_days + days_per_page - 1) // days_per_page)
+
+    pagination_layout = QHBoxLayout()
+    page_label = QLabel(f'Page: ')
+    page_label.setStyleSheet('font-size: 14px; color: white;')
+    page_spin = QSpinBox()
+    page_spin.setMinimum(1)
+    page_spin.setMaximum(total_pages)
+    page_spin.setValue(1)
+    page_spin.setStyleSheet('background: white; color: #231a2b; border-radius: 6px; padding: 4px;')
+    page_info = QLabel(f'of {total_pages} ({len(all_rows)} libraries total)')
+    page_info.setStyleSheet('font-size: 14px; color: #f3e9ff;')
+    pagination_layout.addWidget(page_label)
+    pagination_layout.addWidget(page_spin)
+    pagination_layout.addWidget(page_info)
+    day_page_label = QLabel('Day Page: ')
+    day_page_label.setStyleSheet('font-size: 14px; color: white;')
+    day_page_spin = QSpinBox()
+    day_page_spin.setMinimum(1)
+    day_page_spin.setMaximum(total_day_pages)
+    day_page_spin.setValue(1)
+    day_page_spin.setStyleSheet('background: white; color: #231a2b; border-radius: 6px; padding: 4px;')
+    day_page_info = QLabel(f'of {total_day_pages} ({days_per_page} days per page)')
+    day_page_info.setStyleSheet('font-size: 14px; color: #f3e9ff;')
+    pagination_layout.addWidget(day_page_label)
+    pagination_layout.addWidget(day_page_spin)
+    pagination_layout.addWidget(day_page_info)
+    pagination_layout.addStretch()
+    page_layout.addLayout(pagination_layout)
+
     def render_timeline():
         scene = QGraphicsScene()
 
-        all_rows = viz['library_summary']
         if not all_rows:
             scene.addText('No libraries were selected by this solution.')
             graph.setScene(scene)
             return
 
-        visible_rows = all_rows
+        current_page = page_spin.value()
+        start_idx = (current_page - 1) * libs_per_page
+        end_idx = min(start_idx + libs_per_page, len(all_rows))
+        visible_rows = all_rows[start_idx:end_idx]
+        current_day_page = day_page_spin.value()
+        day_start = (current_day_page - 1) * days_per_page
+        day_end = min(day_start + days_per_page, total_days)
+        visible_days = max(1, day_end - day_start)
+
         left_pad = 136
         top_pad = 22
         if len(visible_rows) <= 150:
@@ -292,9 +337,7 @@ def show_result_visualization(result):
         else:
             day_w = 15
 
-        total_days = max(1, result['deadline'])
-
-        width = left_pad + total_days * day_w + 100
+        width = left_pad + visible_days * day_w + 100
         height = top_pad + len(visible_rows) * row_h + 74
         scene.setSceneRect(0, 0, width, height)
 
@@ -312,9 +355,9 @@ def show_result_visualization(result):
         y_title.setPos(8, 0)
 
         tick_target = 12
-        tick_step = max(1, total_days // tick_target)
-        for day in range(0, total_days, tick_step):
-            x = left_pad + day * day_w
+        tick_step = max(1, visible_days // tick_target)
+        for day in range(day_start, day_end, tick_step):
+            x = left_pad + (day - day_start) * day_w
             scene.addLine(x, top_pad, x, height - 45, QPen(QColor(223, 226, 239)))
             scene.addLine(x, height - 45, x, height - 40, axis_pen)
             label = scene.addText(str(day))
@@ -344,23 +387,34 @@ def show_result_visualization(result):
                     QBrush(QColor(239, 242, 252, 170)),
                 )
 
-            sx = left_pad + signup_start * day_w
-            sw = max(3, (signup_end - signup_start) * day_w)
-            signup_rect = scene.addRect(
-                sx,
-                lane_top,
-                sw,
-                lane_height,
-                QPen(QColor(196, 106, 0, 200)),
-                QBrush(QColor(255, 171, 64, 220)),
-            )
-            signup_rect.setToolTip(f'Library {lib_id}\nSignup: day {signup_start} to {signup_end - 1}')
+            signup_visible_start = max(signup_start, day_start)
+            signup_visible_end = min(signup_end, day_end)
+            if signup_visible_end > signup_visible_start:
+                sx = left_pad + (signup_visible_start - day_start) * day_w
+                sw = max(3, (signup_visible_end - signup_visible_start) * day_w)
+                signup_rect = scene.addRect(
+                    sx,
+                    lane_top,
+                    sw,
+                    lane_height,
+                    QPen(QColor(196, 106, 0, 200)),
+                    QBrush(QColor(255, 171, 64, 220)),
+                )
+                signup_rect.setToolTip(f'Library {lib_id}\nSignup: day {signup_start} to {signup_end - 1}')
 
             for day, sent_count in lib['shipments_by_day'].items():
-                x = left_pad + day * day_w + 1
+                if day < day_start or day >= day_end:
+                    continue
+
+                x = left_pad + (day - day_start) * day_w + 1
                 cap = max(1, lib['shipping_cap'])
-                usage = min(1.0, sent_count / cap)
-                h = max(6, int(lane_height * usage))
+                usage = sent_count / cap
+                clamped_usage = max(0.0, min(1.0, usage))
+                h = int(round(lane_height * clamped_usage))
+                if sent_count > 0 and h == 0:
+                    h = 1
+                if clamped_usage >= 1.0:
+                    h = lane_height
                 ship_w = max(2, day_w - 2)
                 shipment_rect = scene.addRect(
                     x,
@@ -371,7 +425,7 @@ def show_result_visualization(result):
                     QBrush(QColor(46, 204, 113, 230)),
                 )
                 shipment_rect.setToolTip(
-                    f'Library {lib_id} | Day {day}\nBooks sent: {sent_count}\nCapacity: {cap} ({int(usage * 100)}%)'
+                    f'Library {lib_id} | Day {day}\nBooks sent: {sent_count}\nCapacity: {cap} ({int(clamped_usage * 100)}%)'
                 )
 
                 if sent_count > 0 and day_w >= 12 and row_h >= 22:
@@ -390,6 +444,8 @@ def show_result_visualization(result):
 
         graph.setScene(scene)
 
+    page_spin.valueChanged.connect(render_timeline)
+    day_page_spin.valueChanged.connect(render_timeline)
     render_timeline()
 
     action_row = QHBoxLayout()
