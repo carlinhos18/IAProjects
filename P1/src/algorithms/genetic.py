@@ -1,16 +1,12 @@
-import os
-import sys #patch para correr 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import file_parser
 import random
-from classes import Library,Book
+from classes import Library
 
 #heuristica para a selecao
 def heuristic(lib:Library, deadline:int, curr_day:int, books_scanned):
     days_left = deadline - curr_day - lib.sign_up_time
     #se nao da para dar o sign up, cortamos o path
     if days_left <= 0:
-        return -1;
+        return -1
 
 
     max_books = days_left * lib.shipping_cap
@@ -22,7 +18,7 @@ def heuristic(lib:Library, deadline:int, curr_day:int, books_scanned):
         )[:max_books]
     # se nao ha livros, cortamos o path
     if not unique_books:
-        return -1;
+        return -1
 
     score = sum(book.score for book in unique_books)
     return score
@@ -105,7 +101,8 @@ def fitness(individual, deadline):
 def selection(population, fitness_list, n=5):
     #escolher n elementos aleatorios para aumentar a diversidade genetica
     #depois escolhemos os melhor entre esses n
-    indeces = random.sample(range(len(population)),n)
+    n = min(n, len(population))
+    indeces = random.sample(range(len(population)), n)
     best_index = max(indeces, key=lambda i: fitness_list[i])
     return population[best_index]
 
@@ -115,6 +112,9 @@ def selection(population, fitness_list, n=5):
 
 def crossover(parent1, parent2):
     size = len(parent1)
+    if size < 2:
+        return parent1[:]
+
     #escolher 2 valores para por o genes do primeiro parent 
     a,b = sorted(random.sample(range(size),2))
     
@@ -139,6 +139,9 @@ def crossover(parent1, parent2):
 
 #mutacoes com uma chance que definimos para causar mais possibilidades de encontrar a melhor solucao
 def mutation(individual, mutation_rate=0.03):
+    if len(individual) < 2:
+        return
+
     if random.random() > mutation_rate:
         return
     mutation_pool = ['swap', 'reverse', 'insertion']
@@ -159,6 +162,11 @@ def mutation(individual, mutation_rate=0.03):
 
 
 def genetic_alg(libraries, deadline, pop_size=50,generations=100,mutation_rate=0.03,elite_individ = 5):
+    if not libraries:
+        return [], 0
+
+    pop_size = max(1, pop_size)
+    elite_individ = max(1, min(elite_individ, pop_size))
     
     population = create_pop(libraries,deadline,pop_size)
 
