@@ -1,4 +1,5 @@
 import sys, os
+import time
 from PyQt5.QtWidgets import (
     QApplication,
     QLabel,
@@ -11,6 +12,10 @@ from PyQt5.QtWidgets import (
     QGraphicsView,
     QGraphicsScene,
     QSpinBox,
+    QDoubleSpinBox,
+    QFormLayout,
+    QGroupBox,
+    QFrame,
 )
 from PyQt5.QtGui import QPixmap, QFont, QCursor, QColor, QPen, QBrush
 from PyQt5 import QtGui, QtCore
@@ -42,13 +47,203 @@ window.setWindowIcon(QtGui.QIcon(os.path.join(ASSETS_DIR, 'books.png')))
 layout = QVBoxLayout()
 layout.setAlignment(QtCore.Qt.AlignCenter)
 
+ALGORITHM_PARAMETER_SPECS = {
+    'simulated_annealing': [
+        {'name': 'initial_temp', 'label': 'Initial temperature', 'type': 'float', 'default': 1000.0, 'min': 0.1, 'max': 1000000.0, 'step': 10.0, 'decimals': 3},
+        {'name': 'cooling_rate', 'label': 'Cooling rate', 'type': 'float', 'default': 0.995, 'min': 0.1, 'max': 0.999999, 'step': 0.001, 'decimals': 6},
+        {'name': 'min_temp', 'label': 'Minimum temperature', 'type': 'float', 'default': 0.001, 'min': 0.0, 'max': 10.0, 'step': 0.001, 'decimals': 6},
+        {'name': 'max_iter', 'label': 'Max iterations', 'type': 'int', 'default': 10000, 'min': 1, 'max': 1000000, 'step': 100},
+    ],
+    'hill_climbing': [
+        {'name': 'max_iter', 'label': 'Max iterations', 'type': 'int', 'default': 100, 'min': 1, 'max': 1000000, 'step': 10},
+    ],
+    'genetic_algorithm': [
+        {'name': 'pop_size', 'label': 'Population size', 'type': 'int', 'default': 50, 'min': 1, 'max': 1000, 'step': 10},
+        {'name': 'generations', 'label': 'Generations', 'type': 'int', 'default': 100, 'min': 1, 'max': 100000, 'step': 10},
+        {'name': 'mutation_rate', 'label': 'Mutation rate', 'type': 'float', 'default': 0.03, 'min': 0.0, 'max': 1.0, 'step': 0.01, 'decimals': 4},
+        {'name': 'elite_individ', 'label': 'Elite individuals', 'type': 'int', 'default': 5, 'min': 1, 'max': 1000, 'step': 1},
+    ],
+}
+
+def clear_layout_items(target_layout):
+    while target_layout.count():
+        item = target_layout.takeAt(0)
+        child_layout = item.layout()
+        child_widget = item.widget()
+
+        if child_layout is not None:
+            clear_layout_items(child_layout)
+        elif child_widget is not None:
+            child_widget.setParent(None)
+            child_widget.deleteLater()
+
+
 def clear_widgets():
     global layout
-    for widget in widgets:
-        if isinstance(widget, QWidget):
-            layout.removeWidget(widget)
-            widget.deleteLater()
+    clear_layout_items(layout)
     widgets.clear()
+
+
+def format_parameter_value(value):
+    if isinstance(value, float):
+        return f'{value:.6g}'
+    return str(value)
+
+
+def create_parameter_widget(spec):
+    if spec['type'] == 'int':
+        widget = QSpinBox()
+        widget.setRange(spec.get('min', 0), spec.get('max', 1000000))
+        widget.setSingleStep(spec.get('step', 1))
+        widget.setValue(spec['default'])
+    else:
+        widget = QDoubleSpinBox()
+        widget.setDecimals(spec.get('decimals', 3))
+        widget.setRange(spec.get('min', 0.0), spec.get('max', 1000000.0))
+        widget.setSingleStep(spec.get('step', 0.1))
+        widget.setValue(spec['default'])
+
+    widget.setStyleSheet('background: white; color: #231a2b; border-radius: 6px; padding: 4px;')
+    return widget
+
+
+def open_algorithm_settings(input_file, algorithm_name, algorithm_label, algorithm):
+    clear_widgets()
+
+    image = QPixmap(os.path.join(ASSETS_DIR, 'books.png'))
+    image = image.scaled(60, 60)
+    logo = QLabel()
+    logo.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+    logo.setPixmap(image)
+    logo.setAlignment(QtCore.Qt.AlignCenter)
+    logo.setStyleSheet('margin-bottom: 20px;')
+    widgets.append(logo)
+    layout.addWidget(logo)
+    logo.mousePressEvent = lambda _: algorithm_choice_menu(input_file)
+
+    title = QLabel(f'{algorithm_label} Settings')
+    title.setAlignment(QtCore.Qt.AlignCenter)
+    title.setStyleSheet('font-size: 28px; font-weight: bold; color: white; margin-bottom: 8px;')
+    widgets.append(title)
+    layout.addWidget(title)
+
+    subtitle = QLabel('Adjust the parameters before running the algorithm.')
+    subtitle.setAlignment(QtCore.Qt.AlignCenter)
+    subtitle.setStyleSheet('font-size: 16px; color: #f0e8ff; margin-bottom: 18px;')
+    widgets.append(subtitle)
+    layout.addWidget(subtitle)
+
+    intro_card = QGroupBox()
+    intro_card.setStyleSheet(
+        'QGroupBox { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,45); '
+        'border-radius: 18px; padding: 16px; }'
+    )
+    intro_layout = QVBoxLayout()
+    intro_layout.setContentsMargins(18, 12, 18, 12)
+    intro_layout.setSpacing(6)
+    intro_title = QLabel('Tune the algorithm before running')
+    intro_title.setAlignment(QtCore.Qt.AlignCenter)
+    intro_title.setStyleSheet('font-size: 18px; font-weight: bold; color: white;')
+    intro_text = QLabel('Each parameter changes the search behavior. Use the defaults as a baseline, then adjust the values to balance quality and runtime.')
+    intro_text.setAlignment(QtCore.Qt.AlignCenter)
+    intro_text.setWordWrap(True)
+    intro_text.setStyleSheet('font-size: 14px; color: #efe6ff; line-height: 1.4;')
+    intro_layout.addWidget(intro_title)
+    intro_layout.addWidget(intro_text)
+    intro_card.setLayout(intro_layout)
+    widgets.append(intro_card)
+    layout.addWidget(intro_card)
+
+    parameter_box = QGroupBox('Algorithm Parameters')
+    parameter_box.setStyleSheet(
+        'QGroupBox { color: white; font-size: 18px; font-weight: bold; border: 1px solid rgba(255,255,255,70); '
+        'border-radius: 16px; margin-top: 16px; padding: 20px; background: rgba(255,255,255,0.06); }'
+        'QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; padding: 0 8px; }'
+    )
+    parameter_layout = QVBoxLayout()
+    parameter_layout.setContentsMargins(6, 18, 6, 6)
+    parameter_layout.setSpacing(12)
+
+    parameter_widgets = {}
+    for spec in ALGORITHM_PARAMETER_SPECS.get(algorithm_name, []):
+        widget = create_parameter_widget(spec)
+        parameter_widgets[spec['name']] = widget
+        field_card = QFrame()
+        field_card.setStyleSheet(
+            'QFrame { background: rgba(255,255,255,0.9); border: 1px solid rgba(32, 24, 40, 0.08); '
+            'border-radius: 14px; }'
+        )
+        field_layout = QVBoxLayout()
+        field_layout.setContentsMargins(14, 12, 14, 12)
+        field_layout.setSpacing(6)
+
+        label_row = QHBoxLayout()
+        label = QLabel(spec['label'])
+        label.setStyleSheet('color: #281f33; font-size: 15px; font-weight: bold;')
+        value_hint = QLabel(f'Default: {format_parameter_value(spec["default"])}')
+        value_hint.setAlignment(QtCore.Qt.AlignRight)
+        value_hint.setStyleSheet('color: #7a6f86; font-size: 12px;')
+        label_row.addWidget(label)
+        label_row.addStretch()
+        label_row.addWidget(value_hint)
+
+        if spec['name'] in ('initial_temp', 'cooling_rate', 'min_temp'):
+            description_text = {
+                'initial_temp': 'Higher values explore more aggressively at the start.',
+                'cooling_rate': 'Closer to 1.0 slows cooling and keeps exploration longer.',
+                'min_temp': 'Stops the search once the temperature becomes too low.',
+            }[spec['name']]
+        elif spec['name'] == 'mutation_rate':
+            description_text = 'Controls how often children are mutated during reproduction.'
+        elif spec['name'] == 'elite_individ':
+            description_text = 'Keeps the best individuals directly in the next generation.'
+        else:
+            description_text = 'Raises the number of search iterations used by the algorithm.'
+
+        description = QLabel(description_text)
+        description.setWordWrap(True)
+        description.setStyleSheet('color: #544a60; font-size: 12px;')
+
+        field_layout.addLayout(label_row)
+        field_layout.addWidget(description)
+        field_layout.addWidget(widget)
+        field_card.setLayout(field_layout)
+        parameter_layout.addWidget(field_card)
+
+    parameter_layout.addStretch()
+
+    parameter_box.setLayout(parameter_layout)
+    widgets.append(parameter_box)
+    layout.addWidget(parameter_box)
+
+    action_row = QHBoxLayout()
+    back_button = QPushButton('Back to Algorithms')
+    back_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+    back_button.setStyleSheet('QPushButton{ color: white; background: #5a445f; font-size: 16px; font-weight: bold; padding: 10px 16px; border-radius: 12px; } QPushButton:hover{background: #664d6c;}')
+    back_button.clicked.connect(lambda: algorithm_choice_menu(input_file))
+
+    run_button = QPushButton('Run Algorithm')
+    run_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+    run_button.setStyleSheet('QPushButton{ color: white; background: #684756; font-size: 16px; font-weight: bold; padding: 10px 16px; border-radius: 12px; } QPushButton:hover{background: #705665;}')
+
+    def run_selected_algorithm():
+        params = {}
+        for spec in ALGORITHM_PARAMETER_SPECS.get(algorithm_name, []):
+            value = parameter_widgets[spec['name']].value()
+            if spec['type'] == 'int':
+                params[spec['name']] = int(value)
+            else:
+                params[spec['name']] = float(value)
+        apply_algorithm_and_show_results(algorithm, input_file, algorithm_name, params)
+
+    run_button.clicked.connect(run_selected_algorithm)
+
+    action_row.addWidget(back_button)
+    action_row.addStretch()
+    action_row.addWidget(run_button)
+    widgets.append(back_button)
+    widgets.append(run_button)
+    layout.addLayout(action_row)
 
 def show_main_menu(error=""):
     clear_widgets()
@@ -190,9 +385,12 @@ def save_solution(input_file, algorithm_name, solution, deadline):
     return output_path
 
 
-def run_algorithm_from_input(algorithm, input_file, algorithm_name):
+def run_algorithm_from_input(algorithm, input_file, algorithm_name, algorithm_params=None):
     all_books, libraries, deadline = parse_file(input_file)
-    solution, score = algorithm(libraries, deadline)
+    algorithm_params = dict(algorithm_params or {})
+    start_time = time.perf_counter()
+    solution, score = algorithm(libraries, deadline, **algorithm_params)
+    elapsed_time = time.perf_counter() - start_time
     output_path = save_solution(input_file, algorithm_name, solution, deadline)
     visualization = build_visualization_data(solution, deadline)
     return {
@@ -203,6 +401,8 @@ def run_algorithm_from_input(algorithm, input_file, algorithm_name):
         'num_books': len(all_books),
         'num_libraries': len(libraries),
         'visualization': visualization,
+        'elapsed_time': elapsed_time,
+        'parameters': algorithm_params,
     }
 
 def import_libraries():
@@ -217,9 +417,9 @@ def import_libraries():
             show_main_menu(f'Error: {exc}')
 
 
-def apply_algorithm_and_show_results(algorithm, input_file, algorithm_name):
+def apply_algorithm_and_show_results(algorithm, input_file, algorithm_name, algorithm_params=None):
     try:
-        result = run_algorithm_from_input(algorithm, input_file, algorithm_name)
+        result = run_algorithm_from_input(algorithm, input_file, algorithm_name, algorithm_params)
         show_result_visualization(result)
     except Exception as exc:
         show_main_menu(f'Error: {exc}')
@@ -260,6 +460,15 @@ def show_result_visualization(result):
     score_header = QLabel(f'Algorithm: {result["algorithm_name"].replace("_", " ").title()} | Total Score: {result["score"]}')
     score_header.setStyleSheet('font-size: 16px; font-weight: bold; color: #000008; background: rgba(255,255,255,0.1); padding: 10px 12px; border-radius: 8px;')
     page_layout.addWidget(score_header)
+
+    parameter_parts = [f'{name.replace("_", " ").title()}: {format_parameter_value(value)}' for name, value in result.get('parameters', {}).items()]
+    runtime_text = f'Run time: {result["elapsed_time"]:.3f} s'
+    if parameter_parts:
+        runtime_text += ' | Parameters: ' + ', '.join(parameter_parts)
+    runtime_label = QLabel(runtime_text)
+    runtime_label.setStyleSheet('font-size: 15px; font-weight: bold; color: #000008; background: rgba(255,255,255,0.08); padding: 10px 12px; border-radius: 8px;')
+    runtime_label.setWordWrap(True)
+    page_layout.addWidget(runtime_label)
 
     legend = QLabel(
         'Bar description: Orange horizontal bar = library signup period (days spent preparing that library).\n'
@@ -483,17 +692,17 @@ def algorithm_choice_menu(input_file):
     layout.addWidget(label)
 
     simulated_annealing_button = create_button('Simulated Annealing Algorithm')
-    simulated_annealing_button.clicked.connect(lambda: apply_algorithm_and_show_results(simulated_annealing, input_file, 'simulated_annealing'))
+    simulated_annealing_button.clicked.connect(lambda: open_algorithm_settings(input_file, 'simulated_annealing', 'Simulated Annealing Algorithm', simulated_annealing))
     widgets.append(simulated_annealing_button)
     layout.addWidget(simulated_annealing_button, alignment=QtCore.Qt.AlignCenter)
     
     hill_climbing_button = create_button('Hill Climbing Algorithm')
-    hill_climbing_button.clicked.connect(lambda: apply_algorithm_and_show_results(hill_climbing, input_file, 'hill_climbing'))
+    hill_climbing_button.clicked.connect(lambda: open_algorithm_settings(input_file, 'hill_climbing', 'Hill Climbing Algorithm', hill_climbing))
     widgets.append(hill_climbing_button)
     layout.addWidget(hill_climbing_button, alignment=QtCore.Qt.AlignCenter)
     
     genetic_algorithm_button = create_button('Genetic Algorithm')
-    genetic_algorithm_button.clicked.connect(lambda: apply_algorithm_and_show_results(genetic_alg, input_file, 'genetic_algorithm'))
+    genetic_algorithm_button.clicked.connect(lambda: open_algorithm_settings(input_file, 'genetic_algorithm', 'Genetic Algorithm', genetic_alg))
     widgets.append(genetic_algorithm_button)
     layout.addWidget(genetic_algorithm_button, alignment=QtCore.Qt.AlignCenter)
 
