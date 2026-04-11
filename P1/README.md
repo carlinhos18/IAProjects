@@ -1,7 +1,7 @@
 ## To run our app:
 
 ```bash
-cd P1
+cd P1/src
 pip install -r requirements.txt
 python main.py
 ```

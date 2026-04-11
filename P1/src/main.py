@@ -16,11 +16,17 @@ from PyQt5.QtWidgets import (
     QFormLayout,
     QGroupBox,
     QFrame,
+    QComboBox,
 )
 from PyQt5.QtGui import QPixmap, QFont, QCursor, QColor, QPen, QBrush
 from PyQt5 import QtGui, QtCore
 from algorithms.genetic import genetic_alg
-from algorithms.hill_climbing import hill_climbing
+from algorithms.hill_climbing import (
+    hill_climbing,
+    stochastic_hill_climbing,
+    first_choice_hill_climbing,
+    random_restart_hill_climbing,
+)
 from algorithms.simulated_annealing import simulated_annealing
 from file_parser import parse_file
 
@@ -65,6 +71,43 @@ ALGORITHM_PARAMETER_SPECS = {
     ],
 }
 
+HILL_CLIMBING_VARIANTS = {
+    'hill_climbing': {
+        'label': 'Basic Hill Climbing',
+        'description': 'Generates one random neighbor per iteration and keeps it only if it improves the score.',
+        'algorithm': hill_climbing,
+        'params': [
+            {'name': 'max_iter', 'label': 'Max iterations', 'type': 'int', 'default': 100, 'min': 1, 'max': 1000000, 'step': 10},
+        ],
+    },
+    'stochastic_hill_climbing': {
+        'label': 'Stochastic Hill Climbing',
+        'description': 'Generates several better neighbors and randomly picks one of the best candidates.',
+        'algorithm': stochastic_hill_climbing,
+        'params': [
+            {'name': 'it', 'label': 'Iterations', 'type': 'int', 'default': 100, 'min': 1, 'max': 1000000, 'step': 10},
+            {'name': 'candidates', 'label': 'Candidate neighbors', 'type': 'int', 'default': 5, 'min': 1, 'max': 1000, 'step': 1},
+        ],
+    },
+    'first_choice_hill_climbing': {
+        'label': 'First Choice Hill Climbing',
+        'description': 'Keeps searching until it reaches a streak of non-improving neighbors.',
+        'algorithm': first_choice_hill_climbing,
+        'params': [
+            {'name': 'max_no_improvement', 'label': 'Max no improvement', 'type': 'int', 'default': 100, 'min': 1, 'max': 1000000, 'step': 10},
+        ],
+    },
+    'random_restart_hill_climbing': {
+        'label': 'Random Restart Hill Climbing',
+        'description': 'Runs hill climbing multiple times from fresh random starts and keeps the best result.',
+        'algorithm': random_restart_hill_climbing,
+        'params': [
+            {'name': 'restarts', 'label': 'Restarts', 'type': 'int', 'default': 10, 'min': 1, 'max': 100000, 'step': 1},
+            {'name': 'max_iter', 'label': 'Max iterations per restart', 'type': 'int', 'default': 1000, 'min': 1, 'max': 1000000, 'step': 10},
+        ],
+    },
+}
+
 def clear_layout_items(target_layout):
     while target_layout.count():
         item = target_layout.takeAt(0)
@@ -105,6 +148,205 @@ def create_parameter_widget(spec):
 
     widget.setStyleSheet('background: white; color: #231a2b; border-radius: 6px; padding: 4px;')
     return widget
+
+
+def create_styled_combo_box():
+    combo = QComboBox()
+    combo.setStyleSheet(
+        'QComboBox { background: white; color: #231a2b; border: 1px solid rgba(32, 24, 40, 0.15); '
+        'border-radius: 10px; padding: 6px 10px; font-size: 14px; }'
+        'QComboBox::drop-down { border: none; width: 28px; }'
+        'QComboBox QAbstractItemView { background: white; color: #231a2b; selection-background-color: #d8d0ff; }'
+    )
+    return combo
+
+
+def build_parameter_cards(specs, parameter_layout, parameter_widgets):
+    for spec in specs:
+        widget = create_parameter_widget(spec)
+        parameter_widgets[spec['name']] = widget
+        field_card = QFrame()
+        field_card.setStyleSheet(
+            'QFrame { background: rgba(255,255,255,0.92); border: 1px solid rgba(32, 24, 40, 0.08); '
+            'border-radius: 14px; }'
+        )
+        field_layout = QVBoxLayout()
+        field_layout.setContentsMargins(14, 12, 14, 12)
+        field_layout.setSpacing(6)
+
+        label_row = QHBoxLayout()
+        label = QLabel(spec['label'])
+        label.setStyleSheet('color: #281f33; font-size: 15px; font-weight: bold;')
+        value_hint = QLabel(f'Default: {format_parameter_value(spec["default"])}')
+        value_hint.setAlignment(QtCore.Qt.AlignRight)
+        value_hint.setStyleSheet('color: #7a6f86; font-size: 12px;')
+        label_row.addWidget(label)
+        label_row.addStretch()
+        label_row.addWidget(value_hint)
+
+        descriptions = {
+            'initial_temp': 'Higher values explore more aggressively at the start.',
+            'cooling_rate': 'Closer to 1.0 slows cooling and keeps exploration longer.',
+            'min_temp': 'Stops the search once the temperature becomes too low.',
+            'mutation_rate': 'Controls how often children are mutated during reproduction.',
+            'elite_individ': 'Keeps the best individuals directly in the next generation.',
+            'max_iter': 'Raises the number of search iterations used by the algorithm.',
+            'it': 'How many iterations the stochastic version should perform.',
+            'candidates': 'How many better neighbors are sampled each iteration.',
+            'max_no_improvement': 'Search stops after this many non-improving neighbors.',
+            'restarts': 'Number of fresh hill climbing runs used to pick the best solution.',
+        }
+
+        description = QLabel(descriptions.get(spec['name'], ''))
+        description.setWordWrap(True)
+        description.setStyleSheet('color: #544a60; font-size: 12px;')
+
+        field_layout.addLayout(label_row)
+        field_layout.addWidget(description)
+        field_layout.addWidget(widget)
+        field_card.setLayout(field_layout)
+        parameter_layout.addWidget(field_card)
+
+
+def build_settings_header(input_file, algorithm_label, intro_text):
+    image = QPixmap(os.path.join(ASSETS_DIR, 'books.png'))
+    image = image.scaled(60, 60)
+    logo = QLabel()
+    logo.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+    logo.setPixmap(image)
+    logo.setAlignment(QtCore.Qt.AlignCenter)
+    logo.setStyleSheet('margin-bottom: 20px;')
+    widgets.append(logo)
+    layout.addWidget(logo)
+    logo.mousePressEvent = lambda _: algorithm_choice_menu(input_file)
+
+    title = QLabel(f'{algorithm_label} Settings')
+    title.setAlignment(QtCore.Qt.AlignCenter)
+    title.setStyleSheet('font-size: 28px; font-weight: bold; color: white; margin-bottom: 8px;')
+    widgets.append(title)
+    layout.addWidget(title)
+
+    subtitle = QLabel('Adjust the parameters before running the algorithm.')
+    subtitle.setAlignment(QtCore.Qt.AlignCenter)
+    subtitle.setStyleSheet('font-size: 16px; color: #f0e8ff; margin-bottom: 18px;')
+    widgets.append(subtitle)
+    layout.addWidget(subtitle)
+
+    intro_card = QGroupBox()
+    intro_card.setStyleSheet(
+        'QGroupBox { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,45); '
+        'border-radius: 18px; padding: 16px; }'
+    )
+    intro_layout = QVBoxLayout()
+    intro_layout.setContentsMargins(18, 12, 18, 12)
+    intro_layout.setSpacing(6)
+    intro_title = QLabel('Tune the algorithm before running')
+    intro_title.setAlignment(QtCore.Qt.AlignCenter)
+    intro_title.setStyleSheet('font-size: 18px; font-weight: bold; color: white;')
+    intro_label = QLabel(intro_text)
+    intro_label.setAlignment(QtCore.Qt.AlignCenter)
+    intro_label.setWordWrap(True)
+    intro_label.setStyleSheet('font-size: 14px; color: #efe6ff; line-height: 1.4;')
+    intro_layout.addWidget(intro_title)
+    intro_layout.addWidget(intro_label)
+    intro_card.setLayout(intro_layout)
+    widgets.append(intro_card)
+    layout.addWidget(intro_card)
+
+
+def build_action_row(input_file, run_callback):
+    action_row = QHBoxLayout()
+    back_button = QPushButton('Back to Algorithms')
+    back_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+    back_button.setStyleSheet('QPushButton{ color: white; background: #5a445f; font-size: 16px; font-weight: bold; padding: 10px 16px; border-radius: 12px; } QPushButton:hover{background: #664d6c;}')
+    back_button.clicked.connect(lambda: algorithm_choice_menu(input_file))
+
+    run_button = QPushButton('Run Algorithm')
+    run_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+    run_button.setStyleSheet('QPushButton{ color: white; background: #684756; font-size: 16px; font-weight: bold; padding: 10px 16px; border-radius: 12px; } QPushButton:hover{background: #705665;}')
+    run_button.clicked.connect(run_callback)
+
+    action_row.addWidget(back_button)
+    action_row.addStretch()
+    action_row.addWidget(run_button)
+    widgets.append(back_button)
+    widgets.append(run_button)
+    layout.addLayout(action_row)
+
+
+def open_hill_climbing_settings(input_file):
+    clear_widgets()
+    build_settings_header(
+        input_file,
+        'Hill Climbing',
+        'Choose a hill climbing variant and tune its parameters.'
+    )
+
+    selector_box = QGroupBox('Hill Climbing Variant')
+    selector_box.setStyleSheet(
+        'QGroupBox { color: white; font-size: 18px; font-weight: bold; border: 1px solid rgba(255,255,255,70); '
+        'border-radius: 16px; margin-top: 16px; padding: 20px; background: rgba(255,255,255,0.06); }'
+        'QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; padding: 0 8px; }'
+    )
+    selector_layout = QVBoxLayout()
+    selector_layout.setContentsMargins(6, 18, 6, 6)
+    selector_layout.setSpacing(10)
+
+    variant_combo = create_styled_combo_box()
+    variant_combo.addItem('Basic Hill Climbing', 'hill_climbing')
+    variant_combo.addItem('Stochastic Hill Climbing', 'stochastic_hill_climbing')
+    variant_combo.addItem('First Choice Hill Climbing', 'first_choice_hill_climbing')
+    variant_combo.addItem('Random Restart Hill Climbing', 'random_restart_hill_climbing')
+
+    variant_description = QLabel()
+    variant_description.setWordWrap(True)
+    variant_description.setStyleSheet('color: #efe6ff; font-size: 13px;')
+
+    selector_layout.addWidget(variant_combo)
+    selector_layout.addWidget(variant_description)
+    selector_box.setLayout(selector_layout)
+    widgets.append(selector_box)
+    layout.addWidget(selector_box)
+
+    parameters_container = QGroupBox('Algorithm Parameters')
+    parameters_container.setStyleSheet(
+        'QGroupBox { color: white; font-size: 18px; font-weight: bold; border: 1px solid rgba(255,255,255,70); '
+        'border-radius: 16px; margin-top: 16px; padding: 20px; background: rgba(255,255,255,0.06); }'
+        'QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; padding: 0 8px; }'
+    )
+    parameters_layout = QVBoxLayout()
+    parameters_layout.setContentsMargins(6, 18, 6, 6)
+    parameters_layout.setSpacing(12)
+    parameters_container.setLayout(parameters_layout)
+    widgets.append(parameters_container)
+    layout.addWidget(parameters_container)
+
+    parameter_widgets = {}
+
+    def render_variant_fields():
+        clear_layout_items(parameters_layout)
+        parameter_widgets.clear()
+
+        variant_key = variant_combo.currentData()
+        variant_info = HILL_CLIMBING_VARIANTS[variant_key]
+        variant_description.setText(variant_info['description'])
+
+        build_parameter_cards(variant_info['params'], parameters_layout, parameter_widgets)
+        parameters_layout.addStretch()
+
+    variant_combo.currentIndexChanged.connect(render_variant_fields)
+    render_variant_fields()
+
+    def run_selected_variant():
+        variant_key = variant_combo.currentData()
+        variant_info = HILL_CLIMBING_VARIANTS[variant_key]
+        params = {}
+        for spec in variant_info['params']:
+            value = parameter_widgets[spec['name']].value()
+            params[spec['name']] = int(value) if spec['type'] == 'int' else float(value)
+        apply_algorithm_and_show_results(variant_info['algorithm'], input_file, variant_key, params)
+
+    build_action_row(input_file, run_selected_variant)
 
 
 def open_algorithm_settings(input_file, algorithm_name, algorithm_label, algorithm):
@@ -697,7 +939,7 @@ def algorithm_choice_menu(input_file):
     layout.addWidget(simulated_annealing_button, alignment=QtCore.Qt.AlignCenter)
     
     hill_climbing_button = create_button('Hill Climbing Algorithm')
-    hill_climbing_button.clicked.connect(lambda: open_algorithm_settings(input_file, 'hill_climbing', 'Hill Climbing Algorithm', hill_climbing))
+    hill_climbing_button.clicked.connect(lambda: open_hill_climbing_settings(input_file))
     widgets.append(hill_climbing_button)
     layout.addWidget(hill_climbing_button, alignment=QtCore.Qt.AlignCenter)
     
