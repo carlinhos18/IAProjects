@@ -1,5 +1,6 @@
 import sys, os
 import time
+import threading
 from PyQt5.QtWidgets import (
     QApplication,
     QLabel,
@@ -17,6 +18,8 @@ from PyQt5.QtWidgets import (
     QGroupBox,
     QFrame,
     QComboBox,
+    QDialog,
+    QProgressBar,
 )
 from PyQt5.QtGui import QPixmap, QFont, QCursor, QColor, QPen, QBrush
 from PyQt5 import QtGui, QtCore
@@ -31,11 +34,13 @@ from algorithms.simulated_annealing import simulated_annealing
 from file_parser import parse_file
 
 widgets = []
+active_jobs = []
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
 ASSETS_DIR = os.path.join(PROJECT_ROOT, 'assets')
 INPUT_DIR = os.path.join(PROJECT_ROOT, 'input')
 OUTPUT_DIR = os.path.join(PROJECT_ROOT, 'output')
+RUNTIME_HISTORY = {}
 
 app = QApplication(sys.argv)
 
@@ -107,6 +112,161 @@ HILL_CLIMBING_VARIANTS = {
         ],
     },
 }
+
+
+class AlgorithmWorker(QtCore.QObject):
+    finished = QtCore.pyqtSignal(dict)
+    failed = QtCore.pyqtSignal(str)
+    cancelled = QtCore.pyqtSignal()
+
+    def __init__(self, algorithm, input_file, algorithm_name, algorithm_params=None, cancel_event=None):
+        super().__init__()
+        self.algorithm = algorithm
+        self.input_file = input_file
+        self.algorithm_name = algorithm_name
+        self.algorithm_params = dict(algorithm_params or {})
+        self.cancel_event = cancel_event
+
+    @QtCore.pyqtSlot()
+    def run(self):
+        try:
+            execution_params = dict(self.algorithm_params)
+            execution_params.setdefault('stop_requested', lambda: self.cancel_event.is_set() if self.cancel_event else False)
+            result = run_algorithm_from_input(
+                self.algorithm,
+                self.input_file,
+                self.algorithm_name,
+                execution_params,
+            )
+            if self.cancel_event and self.cancel_event.is_set():
+                self.cancelled.emit()
+                return
+            self.finished.emit(result)
+        except Exception as exc:
+            if self.cancel_event and self.cancel_event.is_set():
+                self.cancelled.emit()
+                return
+            self.failed.emit(str(exc))
+
+
+class RunProgressDialog(QDialog):
+    def __init__(self, parent, algorithm_name, estimated_seconds, on_cancel=None):
+        super().__init__(parent)
+        self.estimated_seconds = estimated_seconds
+        self.start_time = time.perf_counter()
+        self.on_cancel = on_cancel
+        self.cancel_triggered = False
+
+        self.setWindowTitle('Running Algorithm')
+        self.setModal(True)
+        self.setFixedWidth(520)
+        self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowContextHelpButtonHint)
+        self.setStyleSheet(
+            'QDialog { background: #2f2538; border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; }'
+            'QLabel { color: #f2ecff; }'
+            'QProgressBar { border: 1px solid rgba(255,255,255,0.25); border-radius: 8px; text-align: center; '
+            'background: rgba(255,255,255,0.08); color: #f2ecff; height: 22px; }'
+            'QProgressBar::chunk { background-color: #7d5a8a; border-radius: 7px; }'
+        )
+
+        dialog_layout = QVBoxLayout()
+        dialog_layout.setContentsMargins(20, 20, 20, 20)
+        dialog_layout.setSpacing(10)
+
+        title = QLabel(f'Running {algorithm_name.replace("_", " ").title()}')
+        title.setStyleSheet('font-size: 17px; font-weight: bold;')
+        dialog_layout.addWidget(title)
+
+        self.status_label = QLabel('Preparing execution...')
+        self.status_label.setStyleSheet('font-size: 13px; color: #e8dcff;')
+        self.status_label.setWordWrap(True)
+        dialog_layout.addWidget(self.status_label)
+
+        self.progress_bar = QProgressBar()
+        dialog_layout.addWidget(self.progress_bar)
+
+        self.details_label = QLabel('Elapsed: 0.0 s')
+        self.details_label.setStyleSheet('font-size: 12px; color: #cbb8e7;')
+        dialog_layout.addWidget(self.details_label)
+
+        self.cancel_button = QPushButton('Cancel Run')
+        self.cancel_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.cancel_button.setStyleSheet(
+            'QPushButton { color: white; background: #7d4b57; font-size: 14px; font-weight: bold; '
+            'padding: 8px 14px; border-radius: 10px; } '
+            'QPushButton:hover { background: #8a5662; } '
+            'QPushButton:disabled { background: #5e4c63; color: #d0c1e0; }'
+        )
+        self.cancel_button.clicked.connect(self.request_cancel)
+        dialog_layout.addWidget(self.cancel_button, alignment=QtCore.Qt.AlignRight)
+
+        self.setLayout(dialog_layout)
+
+        self.timer = QtCore.QTimer(self)
+        self.timer.setInterval(150)
+        self.timer.timeout.connect(self.refresh)
+
+        if self.estimated_seconds and self.estimated_seconds > 0:
+            self.progress_bar.setRange(0, 100)
+            self.progress_bar.setValue(0)
+            self.status_label.setText(f'Expected time: {self.estimated_seconds:.1f} s')
+        else:
+            self.progress_bar.setRange(0, 0)
+            self.status_label.setText('Expected time: estimating from future runs...')
+
+        self.timer.start()
+
+    def refresh(self):
+        elapsed = time.perf_counter() - self.start_time
+        if self.estimated_seconds and self.estimated_seconds > 0:
+            progress = min(95, int((elapsed / self.estimated_seconds) * 100))
+            self.progress_bar.setValue(progress)
+            remaining = max(0.0, self.estimated_seconds - elapsed)
+            self.details_label.setText(f'Elapsed: {elapsed:.1f} s | ETA: {remaining:.1f} s')
+        else:
+            self.details_label.setText(f'Elapsed: {elapsed:.1f} s')
+
+    def request_cancel(self):
+        if self.cancel_triggered:
+            return
+        self.cancel_triggered = True
+        self.status_label.setText('Cancelling... waiting for the current iteration to finish.')
+        self.cancel_button.setEnabled(False)
+        if self.on_cancel is not None:
+            self.on_cancel()
+
+    def closeEvent(self, event):
+        if not self.cancel_triggered and self.on_cancel is not None:
+            self.request_cancel()
+        self.timer.stop()
+        super().closeEvent(event)
+
+
+def runtime_history_key(algorithm_name, input_file):
+    return algorithm_name, os.path.basename(input_file)
+
+
+def estimate_runtime_seconds(algorithm_name, input_file):
+    key = runtime_history_key(algorithm_name, input_file)
+    values = RUNTIME_HISTORY.get(key, [])
+    if values:
+        return sum(values) / len(values)
+
+    fallback_values = []
+    for (alg_name, _), runtimes in RUNTIME_HISTORY.items():
+        if alg_name == algorithm_name:
+            fallback_values.extend(runtimes)
+    if fallback_values:
+        return sum(fallback_values) / len(fallback_values)
+    return None
+
+
+def register_runtime_sample(algorithm_name, input_file, runtime_seconds):
+    key = runtime_history_key(algorithm_name, input_file)
+    samples = RUNTIME_HISTORY.setdefault(key, [])
+    samples.append(float(runtime_seconds))
+    if len(samples) > 8:
+        del samples[0]
 
 def clear_layout_items(target_layout):
     while target_layout.count():
@@ -630,6 +790,7 @@ def save_solution(input_file, algorithm_name, solution, deadline):
 def run_algorithm_from_input(algorithm, input_file, algorithm_name, algorithm_params=None):
     all_books, libraries, deadline = parse_file(input_file)
     algorithm_params = dict(algorithm_params or {})
+    display_params = {k: v for k, v in algorithm_params.items() if k != 'stop_requested'}
     start_time = time.perf_counter()
     solution, score = algorithm(libraries, deadline, **algorithm_params)
     elapsed_time = time.perf_counter() - start_time
@@ -644,7 +805,7 @@ def run_algorithm_from_input(algorithm, input_file, algorithm_name, algorithm_pa
         'num_libraries': len(libraries),
         'visualization': visualization,
         'elapsed_time': elapsed_time,
-        'parameters': algorithm_params,
+        'parameters': display_params,
     }
 
 def import_libraries():
@@ -660,11 +821,67 @@ def import_libraries():
 
 
 def apply_algorithm_and_show_results(algorithm, input_file, algorithm_name, algorithm_params=None):
-    try:
-        result = run_algorithm_from_input(algorithm, input_file, algorithm_name, algorithm_params)
+    estimated_seconds = estimate_runtime_seconds(algorithm_name, input_file)
+    cancel_event = threading.Event()
+
+    def request_cancel():
+        cancel_event.set()
+
+    progress_dialog = RunProgressDialog(window, algorithm_name, estimated_seconds, on_cancel=request_cancel)
+
+    worker_thread = QtCore.QThread(window)
+    worker = AlgorithmWorker(algorithm, input_file, algorithm_name, algorithm_params, cancel_event=cancel_event)
+    worker.moveToThread(worker_thread)
+
+    show_timer = QtCore.QTimer(window)
+    show_timer.setSingleShot(True)
+
+    job = {
+        'thread': worker_thread,
+        'worker': worker,
+        'dialog': progress_dialog,
+        'show_timer': show_timer,
+        'cancel_event': cancel_event,
+    }
+    active_jobs.append(job)
+
+    def cleanup_job():
+        if show_timer.isActive():
+            show_timer.stop()
+        progress_dialog.close()
+        if job in active_jobs:
+            active_jobs.remove(job)
+
+    def on_success(result):
+        register_runtime_sample(algorithm_name, input_file, result['elapsed_time'])
+        cleanup_job()
         show_result_visualization(result)
-    except Exception as exc:
-        show_main_menu(f'Error: {exc}')
+
+    def on_error(error_message):
+        cleanup_job()
+        show_main_menu(f'Error: {error_message}')
+
+    def on_cancelled():
+        cleanup_job()
+        show_main_menu('Run cancelled by user.')
+
+    show_timer.timeout.connect(lambda: progress_dialog.show() if worker_thread.isRunning() else None)
+    show_timer.start(350)
+
+    worker_thread.started.connect(worker.run)
+    worker.finished.connect(on_success)
+    worker.failed.connect(on_error)
+    worker.cancelled.connect(on_cancelled)
+
+    worker.finished.connect(worker_thread.quit)
+    worker.failed.connect(worker_thread.quit)
+    worker.cancelled.connect(worker_thread.quit)
+    worker.finished.connect(worker.deleteLater)
+    worker.failed.connect(worker.deleteLater)
+    worker.cancelled.connect(worker.deleteLater)
+    worker_thread.finished.connect(worker_thread.deleteLater)
+
+    worker_thread.start()
 
 
 def show_result_visualization(result):
@@ -714,7 +931,7 @@ def show_result_visualization(result):
 
     legend = QLabel(
         'Bar description: Orange horizontal bar = library signup period (days spent preparing that library).\n'
-        'Green vertical bars = books shipped that day for that library; taller green bar means more books sent on that day.'
+        'Green vertical bars = books shipped that day for that library; bars are scaled against the largest daily shipping capacity in the solution.'
     )
     legend.setStyleSheet('font-size: 15px; font-weight: bold; color: #000008; background: rgba(255,255,255,0.08); padding: 10px 12px; border-radius: 8px;')
     legend.setWordWrap(True)
@@ -767,6 +984,7 @@ def show_result_visualization(result):
         start_idx = (current_page - 1) * libs_per_page
         end_idx = min(start_idx + libs_per_page, len(all_rows))
         visible_rows = all_rows[start_idx:end_idx]
+        global_max_daily_cap = max(1, max((row['shipping_cap'] for row in all_rows), default=1))
         current_day_page = day_page_spin.value()
         day_start = (current_day_page - 1) * days_per_page
         day_end = min(day_start + days_per_page, total_days)
@@ -859,7 +1077,7 @@ def show_result_visualization(result):
 
                 x = left_pad + (day - day_start) * day_w + 1
                 cap = max(1, lib['shipping_cap'])
-                usage = sent_count / cap
+                usage = sent_count / global_max_daily_cap
                 clamped_usage = max(0.0, min(1.0, usage))
                 h = int(round(lane_height * clamped_usage))
                 if sent_count > 0 and h == 0:
@@ -876,7 +1094,7 @@ def show_result_visualization(result):
                     QBrush(QColor(46, 204, 113, 230)),
                 )
                 shipment_rect.setToolTip(
-                    f'Library {lib_id} | Day {day}\nBooks sent: {sent_count}\nCapacity: {cap} ({int(clamped_usage * 100)}%)'
+                    f'Library {lib_id} | Day {day}\nBooks sent: {sent_count}\nLibrary capacity: {cap}\nScaled against max daily capacity: {global_max_daily_cap}'
                 )
 
                 if sent_count > 0 and day_w >= 12 and row_h >= 22:

@@ -26,7 +26,7 @@ def cal_score(solution: list[Library], deadline: int) -> int:
     return score
 
 
-def hill_climbing(libraries: list[Library], deadline: int, max_iter: int = 100):
+def hill_climbing(libraries: list[Library], deadline: int, max_iter: int = 100, stop_requested=None):
     #Hill Climbing default , cria um vizinho e aceita se for melhor
     if not libraries:
         return [], 0
@@ -37,6 +37,8 @@ def hill_climbing(libraries: list[Library], deadline: int, max_iter: int = 100):
     best_score = cur_score
 
     for _ in range(max_iter):
+        if stop_requested and stop_requested():
+            break
         ngh = random_neighbor(cur)
         ngh_score = cal_score(ngh, deadline)
 
@@ -51,7 +53,7 @@ def hill_climbing(libraries: list[Library], deadline: int, max_iter: int = 100):
     return best, best_score
 
 
-def stochastic_hill_climbing(libraries: list[Library], deadline: int, it: int, candidates: int = 5):
+def stochastic_hill_climbing(libraries: list[Library], deadline: int, it: int, candidates: int = 5, stop_requested=None):
     #Cria vários vizinhos  melhores e escolhe um atoa
     if not libraries:
         return [], 0
@@ -62,8 +64,12 @@ def stochastic_hill_climbing(libraries: list[Library], deadline: int, it: int, c
     best_score = cur_score
 
     for _ in range(it):
+        if stop_requested and stop_requested():
+            break
         uphill = []
         for _ in range(candidates):
+            if stop_requested and stop_requested():
+                break
             neighbor = random_neighbor(cur)
             neighbor_score = cal_score(neighbor, deadline)
             if neighbor_score > cur_score:
@@ -80,7 +86,7 @@ def stochastic_hill_climbing(libraries: list[Library], deadline: int, it: int, c
     return best, best_score
 
 
-def first_choice_hill_climbing(libraries: list[Library], deadline: int, max_no_improvement: int = 100):
+def first_choice_hill_climbing(libraries: list[Library], deadline: int, max_no_improvement: int = 100, stop_requested=None):
     #Gera vizinhos e aceita melhores , para quando nao haver mais melhorias 
     if not libraries:
         return [], 0
@@ -93,6 +99,8 @@ def first_choice_hill_climbing(libraries: list[Library], deadline: int, max_no_i
     no_improvement = 0
 
     while no_improvement < max_no_improvement:
+        if stop_requested and stop_requested():
+            break
         neighbor = random_neighbor(cur)
         neighbor_score = cal_score(neighbor, deadline)
 
@@ -110,14 +118,17 @@ def first_choice_hill_climbing(libraries: list[Library], deadline: int, max_no_i
     return best, best_score
 
 
-def random_restart_hill_climbing(libraries: list[Library], deadline: int, restarts: int = 10, max_iter: int = 1000):
+def random_restart_hill_climbing(libraries: list[Library], deadline: int, restarts: int = 10, max_iter: int = 1000, stop_requested=None):
     
     #Isto so corre o hill climbing varias vezes e escolhe o melhor
     global_best = None
     global_best_score = 0
 
     for _ in range(restarts):
-        solution, score = hill_climbing(libraries, deadline, max_iter)
+        if stop_requested and stop_requested():
+            break
+
+        solution, score = hill_climbing(libraries, deadline, max_iter, stop_requested=stop_requested)
 
         if score > global_best_score:
             global_best = solution

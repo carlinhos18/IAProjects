@@ -161,7 +161,7 @@ def mutation(individual, mutation_rate=0.03):
         individual.insert(b,lib)
 
 
-def genetic_alg(libraries, deadline, pop_size=50,generations=100,mutation_rate=0.03,elite_individ = 5):
+def genetic_alg(libraries, deadline, pop_size=50,generations=100,mutation_rate=0.03,elite_individ = 5, stop_requested=None):
     if not libraries:
         return [], 0
 
@@ -174,6 +174,8 @@ def genetic_alg(libraries, deadline, pop_size=50,generations=100,mutation_rate=0
     best_score = -1 # Talvez mudar para 0? TODO para o futuro se necessario
 
     for _gen in range(generations):
+        if stop_requested and stop_requested():
+            break
         fitness_list = [fitness(individual,deadline) for individual in population]
         
         max_fitness = max(fitness_list)
@@ -187,11 +189,16 @@ def genetic_alg(libraries, deadline, pop_size=50,generations=100,mutation_rate=0
         new_pop = [population[i][:] for i in elite_indices]
 
         while(len(new_pop) < pop_size):
+            if stop_requested and stop_requested():
+                break
             parent1 = selection(population, fitness_list)
             parent2 = selection(population, fitness_list)
             child = crossover(parent1, parent2)
             mutation(child,mutation_rate)
             new_pop.append(child)
+
+        if len(new_pop) < pop_size:
+            break
 
         population = new_pop
 

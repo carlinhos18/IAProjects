@@ -112,7 +112,8 @@ def simulated_annealing(libraries, deadline,
                         initial_temp=1000, 
                         cooling_rate=0.995, 
                         min_temp=1e-3,
-                        max_iter=10000):
+                        max_iter=10000,
+                        stop_requested=None):
     if not libraries:
         return [], 0
 
@@ -125,6 +126,8 @@ def simulated_annealing(libraries, deadline,
     T = initial_temp
 
     for i in range(max_iter):
+        if stop_requested and stop_requested():
+            break
         if T < min_temp:
             break
 
