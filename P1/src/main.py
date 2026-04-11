@@ -1,5 +1,7 @@
 import sys, os
 import time
+import csv
+import datetime
 import threading
 from PyQt5.QtWidgets import (
     QApplication,
@@ -40,6 +42,7 @@ PROJECT_ROOT = os.path.dirname(BASE_DIR)
 ASSETS_DIR = os.path.join(PROJECT_ROOT, 'assets')
 INPUT_DIR = os.path.join(PROJECT_ROOT, 'input')
 OUTPUT_DIR = os.path.join(PROJECT_ROOT, 'output')
+CSV_FILE_PATH = os.path.join(PROJECT_ROOT, 'logs/stats.csv')
 RUNTIME_HISTORY = {}
 
 app = QApplication(sys.argv)
@@ -820,6 +823,45 @@ def import_libraries():
             show_main_menu(f'Error: {exc}')
 
 
+def build_csv_log(result, input_file):
+    file_exists = os.path.isfile(CSV_FILE_PATH)
+
+    timestamp = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+
+    dataset_name = os.path.splitext(os.path.basename(input_file))[0]
+
+    params_str = "; ".join(
+        f"{k}={v}" for k, v in result.get("parameters", {}).items()
+    )
+
+    runtime = round(result["elapsed_time"], 6)
+
+    with open(CSV_FILE_PATH, mode="a", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file)
+
+        # assume  que o ficheiro ainda nao foi criado, e por isso tenta escrever o header
+        if not file_exists:
+            writer.writerow([
+                "timestamp",
+                "dataset_name",
+                "algorithm",
+                "parameters",
+                "score",
+                "runtime"
+            ])
+
+        # escrever no log file a row 
+        writer.writerow([
+            timestamp,
+            dataset_name,
+            result["algorithm_name"],
+            params_str,
+            result["score"],
+            runtime
+        ])
+
+
+
 def apply_algorithm_and_show_results(algorithm, input_file, algorithm_name, algorithm_params=None):
     estimated_seconds = estimate_runtime_seconds(algorithm_name, input_file)
     cancel_event = threading.Event()
@@ -854,6 +896,7 @@ def apply_algorithm_and_show_results(algorithm, input_file, algorithm_name, algo
 
     def on_success(result):
         register_runtime_sample(algorithm_name, input_file, result['elapsed_time'])
+        build_csv_log(result,input_file)
         cleanup_job()
         show_result_visualization(result)
 
