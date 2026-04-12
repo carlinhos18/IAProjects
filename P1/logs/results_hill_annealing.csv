@@ -1,0 +1,61 @@
+timestamp,dataset,algorithm,varied_param,param_variant,run,parameters,score,runtime_s
+2026-04-12 01:17:28,b_read_on,simulated_annealing,initial_temp,1,1,initial_temp=100.0; cooling_rate=0.995; min_temp=0.001; max_iter=10000,5815400,17.358138
+2026-04-12 01:17:28,b_read_on,simulated_annealing,initial_temp,2,1,initial_temp=1000.0; cooling_rate=0.995; min_temp=0.001; max_iter=10000,5818100,22.253303
+2026-04-12 01:17:28,b_read_on,simulated_annealing,initial_temp,3,1,initial_temp=10000.0; cooling_rate=0.995; min_temp=0.001; max_iter=10000,5812300,21.974523
+2026-04-12 01:17:28,b_read_on,simulated_annealing,initial_temp,4,1,initial_temp=100000.0; cooling_rate=0.995; min_temp=0.001; max_iter=10000,5802800,24.426889
+2026-04-12 01:17:35,b_read_on,hill_climbing,max_iter,1,1,max_iter=50,4687700,0.378604
+2026-04-12 01:17:35,b_read_on,hill_climbing,max_iter,2,1,max_iter=200,5231000,1.432641
+2026-04-12 01:17:35,b_read_on,hill_climbing,max_iter,3,1,max_iter=300,5329700,2.245315
+2026-04-12 01:17:35,b_read_on,hill_climbing,max_iter,4,1,max_iter=500,5455800,3.673966
+2026-04-12 01:18:10,b_read_on,stochastic_hill_climbing,candidates,1,1,it=100; candidates=3,5065800,2.204546
+2026-04-12 01:18:10,b_read_on,stochastic_hill_climbing,candidates,2,1,it=100; candidates=7,5325200,5.057643
+2026-04-12 01:18:10,b_read_on,stochastic_hill_climbing,candidates,3,1,it=100; candidates=15,5375700,10.440577
+2026-04-12 01:18:10,b_read_on,stochastic_hill_climbing,candidates,4,1,it=100; candidates=25,5240700,17.141346
+2026-04-12 01:19:30,b_read_on,first_choice_hill_climbing,max_no_improvement,1,1,max_no_improvement=30,5377500,2.97617
+2026-04-12 01:19:30,b_read_on,first_choice_hill_climbing,max_no_improvement,2,1,max_no_improvement=100,5181600,18.136798
+2026-04-12 01:19:30,b_read_on,first_choice_hill_climbing,max_no_improvement,3,1,max_no_improvement=200,5478200,21.869003
+2026-04-12 01:19:30,b_read_on,first_choice_hill_climbing,max_no_improvement,4,1,max_no_improvement=300,5612800,36.638688
+2026-04-12 01:20:33,b_read_on,random_restart_hill_climbing,restarts,1,1,restarts=3; max_iter=200,5110400,4.109987
+2026-04-12 01:20:33,b_read_on,random_restart_hill_climbing,restarts,2,1,restarts=8; max_iter=200,5285000,11.228541
+2026-04-12 01:20:33,b_read_on,random_restart_hill_climbing,restarts,3,1,restarts=15; max_iter=200,5227200,20.381271
+2026-04-12 01:20:33,b_read_on,random_restart_hill_climbing,restarts,4,1,restarts=20; max_iter=200,5273700,27.687653
+2026-04-12 01:21:53,c_incunabula,simulated_annealing,initial_temp,1,1,initial_temp=100.0; cooling_rate=0.995; min_temp=0.001; max_iter=10000,1334637,19.617372
+2026-04-12 01:21:53,c_incunabula,simulated_annealing,initial_temp,2,1,initial_temp=1000.0; cooling_rate=0.995; min_temp=0.001; max_iter=10000,1316208,20.629254
+2026-04-12 01:21:53,c_incunabula,simulated_annealing,initial_temp,3,1,initial_temp=10000.0; cooling_rate=0.995; min_temp=0.001; max_iter=10000,1241019,19.421411
+2026-04-12 01:21:53,c_incunabula,simulated_annealing,initial_temp,4,1,initial_temp=100000.0; cooling_rate=0.995; min_temp=0.001; max_iter=10000,1232259,19.381589
+2026-04-12 01:21:54,c_incunabula,hill_climbing,max_iter,1,1,max_iter=50,889712,0.056838
+2026-04-12 01:21:54,c_incunabula,hill_climbing,max_iter,2,1,max_iter=200,828552,0.172897
+2026-04-12 01:21:54,c_incunabula,hill_climbing,max_iter,3,1,max_iter=300,898076,0.25921
+2026-04-12 01:21:54,c_incunabula,hill_climbing,max_iter,4,1,max_iter=500,900826,0.475054
+2026-04-12 01:21:58,c_incunabula,stochastic_hill_climbing,candidates,1,1,it=100; candidates=3,873762,0.260969
+2026-04-12 01:21:58,c_incunabula,stochastic_hill_climbing,candidates,2,1,it=100; candidates=7,931697,0.631006
+2026-04-12 01:21:58,c_incunabula,stochastic_hill_climbing,candidates,3,1,it=100; candidates=15,917807,1.302191
+2026-04-12 01:21:58,c_incunabula,stochastic_hill_climbing,candidates,4,1,it=100; candidates=25,955522,2.164753
+2026-04-12 01:21:59,c_incunabula,first_choice_hill_climbing,max_no_improvement,1,1,max_no_improvement=30,825346,0.036048
+2026-04-12 01:21:59,c_incunabula,first_choice_hill_climbing,max_no_improvement,2,1,max_no_improvement=100,851219,0.087242
+2026-04-12 01:21:59,c_incunabula,first_choice_hill_climbing,max_no_improvement,3,1,max_no_improvement=200,945564,0.182295
+2026-04-12 01:21:59,c_incunabula,first_choice_hill_climbing,max_no_improvement,4,1,max_no_improvement=300,887730,0.248178
+2026-04-12 01:22:07,c_incunabula,random_restart_hill_climbing,restarts,1,1,restarts=3; max_iter=200,920310,0.52481
+2026-04-12 01:22:07,c_incunabula,random_restart_hill_climbing,restarts,2,1,restarts=8; max_iter=200,957829,1.419348
+2026-04-12 01:22:07,c_incunabula,random_restart_hill_climbing,restarts,3,1,restarts=15; max_iter=200,957899,2.569799
+2026-04-12 01:22:07,c_incunabula,random_restart_hill_climbing,restarts,4,1,restarts=20; max_iter=200,973061,3.536632
+2026-04-12 02:36:55,d_tough_choices,simulated_annealing,initial_temp,1,1,initial_temp=100.0; cooling_rate=0.995; min_temp=0.001; max_iter=10000,4968210,1103.734415
+2026-04-12 02:36:55,d_tough_choices,simulated_annealing,initial_temp,2,1,initial_temp=1000.0; cooling_rate=0.995; min_temp=0.001; max_iter=10000,4973475,1113.054821
+2026-04-12 02:36:55,d_tough_choices,simulated_annealing,initial_temp,3,1,initial_temp=10000.0; cooling_rate=0.995; min_temp=0.001; max_iter=10000,4973020,1126.016725
+2026-04-12 02:36:55,d_tough_choices,simulated_annealing,initial_temp,4,1,initial_temp=100000.0; cooling_rate=0.995; min_temp=0.001; max_iter=10000,4974125,1145.38919
+2026-04-12 02:37:39,d_tough_choices,hill_climbing,max_iter,1,1,max_iter=50,4338555,2.152429
+2026-04-12 02:37:39,d_tough_choices,hill_climbing,max_iter,2,1,max_iter=200,4343300,8.32008
+2026-04-12 02:37:39,d_tough_choices,hill_climbing,max_iter,3,1,max_iter=300,4351295,12.530303
+2026-04-12 02:37:39,d_tough_choices,hill_climbing,max_iter,4,1,max_iter=500,4346485,20.930134
+2026-04-12 02:41:06,d_tough_choices,stochastic_hill_climbing,candidates,1,1,it=100; candidates=3,4344795,12.435404
+2026-04-12 02:41:06,d_tough_choices,stochastic_hill_climbing,candidates,2,1,it=100; candidates=7,4347265,28.92157
+2026-04-12 02:41:06,d_tough_choices,stochastic_hill_climbing,candidates,3,1,it=100; candidates=15,4351165,62.223569
+2026-04-12 02:41:06,d_tough_choices,stochastic_hill_climbing,candidates,4,1,it=100; candidates=25,4348305,103.663973
+2026-04-12 02:41:33,d_tough_choices,first_choice_hill_climbing,max_no_improvement,1,1,max_no_improvement=30,4341090,1.327456
+2026-04-12 02:41:33,d_tough_choices,first_choice_hill_climbing,max_no_improvement,2,1,max_no_improvement=100,4355715,4.225481
+2026-04-12 02:41:33,d_tough_choices,first_choice_hill_climbing,max_no_improvement,3,1,max_no_improvement=200,4344535,8.43843
+2026-04-12 02:41:33,d_tough_choices,first_choice_hill_climbing,max_no_improvement,4,1,max_no_improvement=300,4347070,12.473806
+2026-04-12 02:47:58,d_tough_choices,random_restart_hill_climbing,restarts,1,1,restarts=3; max_iter=200,4354285,26.292937
+2026-04-12 02:47:58,d_tough_choices,random_restart_hill_climbing,restarts,2,1,restarts=8; max_iter=200,4356105,66.585707
+2026-04-12 02:47:58,d_tough_choices,random_restart_hill_climbing,restarts,3,1,restarts=15; max_iter=200,4356755,124.999611
+2026-04-12 02:47:58,d_tough_choices,random_restart_hill_climbing,restarts,4,1,restarts=20; max_iter=200,4358250,167.264632
