@@ -10,6 +10,7 @@ timestamp,dataset,algorithm,varied_param,param_variant,run,parameters,score,runt
 2026-04-12 01:18:10,b_read_on,stochastic_hill_climbing,candidates,1,1,it=100; candidates=3,5065800,2.204546
 2026-04-12 01:18:10,b_read_on,stochastic_hill_climbing,candidates,2,1,it=100; candidates=7,5325200,5.057643
 2026-04-12 01:18:10,b_read_on,stochastic_hill_climbing,candidates,3,1,it=100; candidates=15,5375700,10.440577
+2026-04-12 01:18:10,b_read_on,stochastic_hill_climbing,candidates,4,1,it=100; candidates=25,5240700,17.141346
 2026-04-12 01:19:30,b_read_on,first_choice_hill_climbing,max_no_improvement,1,1,max_no_improvement=30,5377500,2.97617
 2026-04-12 01:19:30,b_read_on,first_choice_hill_climbing,max_no_improvement,2,1,max_no_improvement=100,5181600,18.136798
 2026-04-12 01:19:30,b_read_on,first_choice_hill_climbing,max_no_improvement,3,1,max_no_improvement=200,5478200,21.869003

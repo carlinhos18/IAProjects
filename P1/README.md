@@ -167,6 +167,8 @@ We conclude that varying the initial temperature had almost no effect on the sco
 
 ### Important Note
 
+The following data corresponds to the baseline configuration that the group initially intended to use for all experiments. However, due to the extremely high runtime observed in some datasets, it became impractical to use this configuration for all parameter variations.
+
 | dataset                  | algorithm         | varied_param | param_variant | run | parameters                                                                 | score   | runtime_s     |
 |--------------------------|------------------|-------------|--------------|-----|---------------------------------------------------------------------------|---------|--------------|
 | b_read_on                | genetic_algorithm | pop_size     | 1            | 1   | pop_size=50; generations=100; mutation_rate=0.03; elite_individ=5         | 5802700 | 24.038846    |
