@@ -189,9 +189,13 @@ The following data corresponds to the baseline configuration that the group init
 
 ## Conclusions
 
-Increasing the population size produced a 10% score improvement on Dataset B, while showing no significant difference for the remaining datasets. However, runtime increased approximately linearly with population size.
+From what we've gathered, population size is the most dominant parameter. Higher generations matter less than we previously expected due to  an early convergence, specially on larger library datasets - extra generations past this point waste time without improving scores. Higher mutation rates seem to compensate for convergence loss of diversity. Elitism helps preserve good solutions but becomes counterproductive when it dominates a fraction too large of the population.
 
-Varying the remaining parameters did not significantly affect either runtime or score.
+On dataset D, results are almost identical regardless of parameters while runtime massively increases. This suggests that the problems constraints and  the heuristic leave almost no room for the algorithm to actually make some changes and improve the initial population. So in this case, having more generations adds almost no value
+
+
+
+
 
 
 
