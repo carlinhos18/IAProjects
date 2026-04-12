@@ -11,22 +11,26 @@ def heuristic(lib:Library, deadline:int, curr_day:int, books_scanned):
 
     max_books = days_left * lib.shipping_cap
 
-    unique_books = sorted(
-        (book for book in lib.books if book.id not in books_scanned),
-        key=lambda book: book.score,
-        reverse=True 
-        )[:max_books]
-    # se nao ha livros, cortamos o path
-    if not unique_books:
+    #mudei a ordenacao para dentro do genetic para nao estar a chamar semrpre que fazemos a heuristica
+    #assim poupamos bastante mais intrucoes e deve fazer com que o codigo ande mais rapido i hope
+    score = 0
+    count = 0
+    for book in lib.books:
+        if book.id not in books_scanned:
+            score += book.score
+            count += 1
+            if count >= max_books:
+                break
+
+    if count == 0:
         return -1
 
-    score = sum(book.score for book in unique_books)
     return score
 
 
 #criar indivios para testar
 def create_individual(libraries, deadline):
-    libraries_left = list(libraries)
+    libraries_left = set(libraries)
     curr_day = 0
     books_scanned = set()
     ordered = []
@@ -63,8 +67,9 @@ def create_individual(libraries, deadline):
         
         
 
-    random.shuffle(libraries_left)
-    return ordered + libraries_left
+    remaining = list(libraries_left)
+    random.shuffle(remaining)
+    return ordered + remaining
 
 
 def create_pop(libraries, deadline, pop_size):
@@ -164,6 +169,9 @@ def mutation(individual, mutation_rate=0.03):
 def genetic_alg(libraries, deadline, pop_size=50,generations=100,mutation_rate=0.03,elite_individ = 5, stop_requested=None):
     if not libraries:
         return [], 0
+
+    for lib in libraries:
+        lib.books.sort(key=lambda b: b.score, reverse=True)
 
     pop_size = max(1, pop_size)
     elite_individ = max(1, min(elite_individ, pop_size))
