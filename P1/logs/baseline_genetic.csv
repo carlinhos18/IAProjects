@@ -1,8 +1,0 @@
-timestamp,dataset,algorithm,varied_param,param_variant,run,parameters,score,runtime_s
-2026-04-12 03:06:52,b_read_on,genetic_algorithm,pop_size,1,1,pop_size=50; generations=100; mutation_rate=0.03; elite_individ=5,5802700,24.038846
-2026-04-12 03:07:16,b_read_on,genetic_algorithm,pop_size,1,2,pop_size=50; generations=100; mutation_rate=0.03; elite_individ=5,5804300,24.243881
-2026-04-12 03:07:40,b_read_on,genetic_algorithm,pop_size,1,3,pop_size=50; generations=100; mutation_rate=0.03; elite_individ=5,5808200,24.47384
-2026-04-12 03:12:19,c_incunabula,genetic_algorithm,pop_size,1,1,pop_size=50; generations=100; mutation_rate=0.03; elite_individ=5,1324719,279.024321
-2026-04-12 03:16:52,c_incunabula,genetic_algorithm,pop_size,1,2,pop_size=50; generations=100; mutation_rate=0.03; elite_individ=5,1352179,272.309468
-2026-04-12 03:21:16,c_incunabula,genetic_algorithm,pop_size,1,3,pop_size=50; generations=100; mutation_rate=0.03; elite_individ=5,1309945,264.655669
-2026-04-12 08:11:00,d_tough_choices,genetic_algorithm,pop_size,1,1,pop_size=50; generations=100; mutation_rate=0.03; elite_individ=5,4977375,17383.082501

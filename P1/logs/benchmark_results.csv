@@ -10,7 +10,6 @@ timestamp,dataset,algorithm,varied_param,param_variant,run,parameters,score,runt
 2026-04-12 01:18:10,b_read_on,stochastic_hill_climbing,candidates,1,1,it=100; candidates=3,5065800,2.204546
 2026-04-12 01:18:10,b_read_on,stochastic_hill_climbing,candidates,2,1,it=100; candidates=7,5325200,5.057643
 2026-04-12 01:18:10,b_read_on,stochastic_hill_climbing,candidates,3,1,it=100; candidates=15,5375700,10.440577
-2026-04-12 01:18:10,b_read_on,stochastic_hill_climbing,candidates,4,1,it=100; candidates=25,5240700,17.141346
 2026-04-12 01:19:30,b_read_on,first_choice_hill_climbing,max_no_improvement,1,1,max_no_improvement=30,5377500,2.97617
 2026-04-12 01:19:30,b_read_on,first_choice_hill_climbing,max_no_improvement,2,1,max_no_improvement=100,5181600,18.136798
 2026-04-12 01:19:30,b_read_on,first_choice_hill_climbing,max_no_improvement,3,1,max_no_improvement=200,5478200,21.869003
@@ -59,3 +58,35 @@ timestamp,dataset,algorithm,varied_param,param_variant,run,parameters,score,runt
 2026-04-12 02:47:58,d_tough_choices,random_restart_hill_climbing,restarts,2,1,restarts=8; max_iter=200,4356105,66.585707
 2026-04-12 02:47:58,d_tough_choices,random_restart_hill_climbing,restarts,3,1,restarts=15; max_iter=200,4356755,124.999611
 2026-04-12 02:47:58,d_tough_choices,random_restart_hill_climbing,restarts,4,1,restarts=20; max_iter=200,4358250,167.264632
+2026-04-12 02:41:15,b_read_on,genetic_algorithm,generations,1,1,pop_size=20; generations=30; mutation_rate=0.03; elite_individ=5,5774800,5.157043
+2026-04-12 02:41:19,b_read_on,genetic_algorithm,generations,2,1,pop_size=20; generations=15; mutation_rate=0.03; elite_individ=5,5770900,4.11585
+2026-04-12 02:41:26,b_read_on,genetic_algorithm,generations,3,1,pop_size=20; generations=50; mutation_rate=0.03; elite_individ=5,5780400,6.540927
+2026-04-12 02:41:34,b_read_on,genetic_algorithm,generations,4,1,pop_size=20; generations=75; mutation_rate=0.03; elite_individ=5,5771000,8.014889
+2026-04-12 02:41:36,b_read_on,genetic_algorithm,pop_size,5,1,pop_size=10; generations=30; mutation_rate=0.03; elite_individ=5,5740200,2.516948
+2026-04-12 02:41:46,b_read_on,genetic_algorithm,pop_size,6,1,pop_size=40; generations=30; mutation_rate=0.03; elite_individ=5,5784000,10.119979
+2026-04-12 02:42:02,b_read_on,genetic_algorithm,pop_size,7,1,pop_size=60; generations=30; mutation_rate=0.03; elite_individ=5,5801600,15.590973
+2026-04-12 02:42:07,b_read_on,genetic_algorithm,mutation_rate,8,1,pop_size=20; generations=30; mutation_rate=0.05; elite_individ=5,5762700,5.376261
+2026-04-12 02:42:13,b_read_on,genetic_algorithm,mutation_rate,9,1,pop_size=20; generations=30; mutation_rate=0.1; elite_individ=5,5770200,5.230139
+2026-04-12 02:42:18,b_read_on,genetic_algorithm,mutation_rate,10,1,pop_size=20; generations=30; mutation_rate=0.2; elite_individ=5,5772300,5.178983
+2026-04-12 02:42:23,b_read_on,genetic_algorithm,elite_individ,11,1,pop_size=20; generations=30; mutation_rate=0.03; elite_individ=10,5772100,5.151803
+2026-04-12 02:42:28,b_read_on,genetic_algorithm,elite_individ,12,1,pop_size=20; generations=30; mutation_rate=0.03; elite_individ=15,5763400,5.084422
+2026-04-12 02:42:33,b_read_on,genetic_algorithm,elite_individ,13,1,pop_size=20; generations=30; mutation_rate=0.03; elite_individ=20,5739700,5.16937
+2026-04-12 02:44:15,c_incunabula,genetic_algorithm,generations,1,1,pop_size=20; generations=30; mutation_rate=0.03; elite_individ=5,1305193,101.301231
+2026-04-12 02:45:57,c_incunabula,genetic_algorithm,generations,2,1,pop_size=20; generations=15; mutation_rate=0.03; elite_individ=5,1289439,102.703441
+2026-04-12 02:47:41,c_incunabula,genetic_algorithm,generations,3,1,pop_size=20; generations=50; mutation_rate=0.03; elite_individ=5,1271468,103.658454
+2026-04-12 02:49:31,c_incunabula,genetic_algorithm,generations,4,1,pop_size=20; generations=75; mutation_rate=0.03; elite_individ=5,1270790,109.91398
+2026-04-12 02:50:19,c_incunabula,genetic_algorithm,pop_size,5,1,pop_size=10; generations=30; mutation_rate=0.03; elite_individ=5,1285085,47.684326
+2026-04-12 02:53:45,c_incunabula,genetic_algorithm,pop_size,6,1,pop_size=40; generations=30; mutation_rate=0.03; elite_individ=5,1319142,206.0344
+2026-04-12 02:58:52,c_incunabula,genetic_algorithm,pop_size,7,1,pop_size=60; generations=30; mutation_rate=0.03; elite_individ=5,1310407,307.824221
+2026-04-12 03:00:30,c_incunabula,genetic_algorithm,mutation_rate,8,1,pop_size=20; generations=30; mutation_rate=0.05; elite_individ=5,1316397,97.160419
+2026-04-12 03:02:07,c_incunabula,genetic_algorithm,mutation_rate,9,1,pop_size=20; generations=30; mutation_rate=0.1; elite_individ=5,1313124,97.922555
+2026-04-12 03:03:49,c_incunabula,genetic_algorithm,mutation_rate,10,1,pop_size=20; generations=30; mutation_rate=0.2; elite_individ=5,1318810,101.860122
+2026-04-12 03:05:23,c_incunabula,genetic_algorithm,elite_individ,11,1,pop_size=20; generations=30; mutation_rate=0.03; elite_individ=10,1315884,93.632794
+2026-04-12 03:07:02,c_incunabula,genetic_algorithm,elite_individ,12,1,pop_size=20; generations=30; mutation_rate=0.03; elite_individ=15,1300080,99.076105
+2026-04-12 03:08:42,c_incunabula,genetic_algorithm,elite_individ,13,1,pop_size=20; generations=30; mutation_rate=0.03; elite_individ=20,1327321,99.903534
+2026-04-12 05:04:10,d_tough_choices,genetic_algorithm,generations,1,1,pop_size=20; generations=30; mutation_rate=0.03; elite_individ=5,4974060,6927.814188
+2026-04-12 06:57:55,d_tough_choices,genetic_algorithm,generations,2,1,pop_size=20; generations=15; mutation_rate=0.03; elite_individ=5,4974970,6825.320205
+2026-04-12 08:48:03,d_tough_choices,genetic_algorithm,generations,3,1,pop_size=20; generations=50; mutation_rate=0.03; elite_individ=5,4976595,6607.32155
+2026-04-12 10:38:33,d_tough_choices,genetic_algorithm,generations,4,1,pop_size=20; generations=75; mutation_rate=0.03; elite_individ=5,4974775,6630.426631
+2026-04-12 11:35:14,d_tough_choices,genetic_algorithm,pop_size,5,1,pop_size=10; generations=30; mutation_rate=0.03; elite_individ=5,4977635,3400.617459
+2026-04-12 15:25:13,d_tough_choices,genetic_algorithm,pop_size,6,1,pop_size=40; generations=30; mutation_rate=0.03; elite_individ=5,4976335,13799.906609
