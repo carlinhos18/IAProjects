@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Previsões</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <h1>Previsões IA</h1>
+
+    <p class="subtitle">Estimativa baseada no ranking atual. Escolha duas equipas para ver a probabilidade de vitória.</p>
+    <div class="layout">
+        <aside class="controls">
+            <section id="chooser" class="card">
+                <h3>Comparar duas equipas</h3>
+                <label for="teamA">Equipa A</label>
+                <select id="teamA"></select>
+
+                <label for="teamB">Equipa B</label>
+                <select id="teamB"></select>
+
+                <div id="matchResult" aria-live="polite" class="result-card"></div>
+            </section>
+
+            <section class="card" id="comparisonCard">
+                <h3>Comparar com resultados reais</h3>
+                <div class="row">
+                    <input type="file" id="actualsFile" accept=".csv">
+                    <button id="loadSample">Usar sample actuals.csv</button>
+                </div>
+                <div id="comparisonResults" aria-live="polite"></div>
+                <button id="downloadMismatches" style="margin-top:8px;">Descarregar erros (CSV)</button>
+            </section>
+        </aside>
+
+        <main class="main">
+            <h2>Todas as previsões</h2>
+            <table id="predictionsTable">
+        <thead>
+            <tr>
+                <th>Jogo</th>
+                <th>Prob. Equipa 1</th>
+                <th>Prob. Equipa 2</th>
+                <th>Favorito</th>
+            </tr>
+        </thead>
+
+        <tbody></tbody>
+
+            </table>
+
+            <section class="card" id="teamStatsCard">
+                <h3>Por-equipa: acurácia em jogos com previsão</h3>
+                <table id="teamStatsTable">
+                    <thead>
+                        <tr><th>Equipa</th><th>Jogos com previsão</th><th>Acertos</th><th>Acurácia</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+    <script src="../JS/parser.js"></script>
+    <script src="../JS/predictions.js"></script>
+
+</body>
+
+</html>
