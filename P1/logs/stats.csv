@@ -1,0 +1,7 @@
+timestamp,dataset_name,algorithm,parameters,score,runtime
+14-04-2026 09:09:06,b_read_on,genetic_algorithm,pop_size=10; generations=20; mutation_rate=0.03; elite_individ=1,5751100,11.181993
+14-04-2026 09:11:21,c_incunabula,simulated_annealing,initial_temp=1000.0; cooling_rate=0.995; min_temp=0.001; max_iter=50,1196493,28.267059
+14-04-2026 09:13:11,f_libraries_of_the_world,stochastic_hill_climbing,it=20; candidates=5,1006246,0.207434
+14-04-2026 09:26:10,b_read_on,random_restart_hill_climbing,restarts=4; max_iter=20,4497700,1.642088
+14-04-2026 09:28:25,b_read_on,simulated_annealing,initial_temp=1000.0; cooling_rate=0.995; min_temp=0.001; max_iter=2000,5807600,37.272359
+14-04-2026 09:29:07,b_read_on,genetic_algorithm,pop_size=3; generations=8; mutation_rate=0.03; elite_individ=1,5760200,2.799194
