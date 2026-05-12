@@ -15,7 +15,7 @@ Windows:
 cd P2/src
 pip install -r requirements.txt
 ```
-Nix
+Nix:
 
 ``` bash
 cd P2/src
