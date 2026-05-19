@@ -7,6 +7,12 @@ from scipy.sparse import hstack, csr_matrix
 
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.ensemble import RandomForestClassifier
+
+#meti estes para comparacoes
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.linear_model import LogisticRegression
+
+
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
@@ -216,7 +222,7 @@ y_train = y[:split_index]
 y_test = y[split_index:]
 
 #300 arvores de profundidade max de 12,o random_state é para ser reproducivel, o balanced compensa caso home wins >> away wins. e
-model = RandomForestClassifier(
+model1 = RandomForestClassifier(
     n_estimators=300,
     max_depth=12,
     min_samples_split=5,
@@ -224,31 +230,60 @@ model = RandomForestClassifier(
     random_state=42
 )
 
-model.fit(X_train, y_train)
+model2 = GradientBoostingClassifier(
+    n_estimators=300,
+    max_depth=5, 
+    min_samples_split=5,
+    random_state=42
+)
 
-print("\nModel trained")
+model3 = LogisticRegression(
+    max_iter=1500,
+    class_weight='balanced',
+    solver='liblinear',
+    random_state=42
+)
+
+
+#multi train so para ser mais facil
+models = {
+    'Random_Forest':model1,
+    'Gradient_Boost':model2,
+    'Logistic_Reg':model3
+}
+
+#model.fit(X_train, y_train)
+trained_models = {}
+
+for name, model in models.items():
+    model.fit(X_train, y_train)
+    trained_models[name] = model
+    print(f"\nModel {name} trained")
 
 #Avalir modelo
 
-predictions = model.predict(X_test)
+for name, model in trained_models:
 
-accuracy = accuracy_score(y_test, predictions)
+    print(f"{name} predictions:")
+    predictions = model.predict(X_test)
 
-print("\nAccuracy:")
-print(accuracy)
+    accuracy = accuracy_score(y_test, predictions)
 
-print("\nClassification Report:")
-print(classification_report(y_test, predictions))
+    print("\nAccuracy:")
+    print(accuracy)
 
-print("\nConfusion Matrix:")
-print(confusion_matrix(y_test, predictions))
+    print("\nClassification Report:")
+    print(classification_report(y_test, predictions))
+
+    print("\nConfusion Matrix:")
+    print(confusion_matrix(y_test, predictions))
 
 #Isto é para a UI
 #Basciamente perguntamos ao modelo que featues é que ele usou para decioes
 feature_importance = pd.DataFrame({
 
     'Feature': feature_names,
-    'Importance': model.feature_importances_
+    'Importance': model1.feature_importances_
 
 })
 
@@ -262,7 +297,11 @@ print(feature_importance.head(20))
 
 #Guardar modelos para meter no app.py
 
-joblib.dump(model, "../models/nba_model.pkl")
+for name, model in trained_models:
+    joblib.dump(model, f"../models/{name}_nba_model.pkl")
+
+
+
 joblib.dump(team_encoder, "../models/team_encoder.pkl")
 joblib.dump(feature_names, "../models/feature_names.pkl")
 print("\nArtifacts saved successfully.")
