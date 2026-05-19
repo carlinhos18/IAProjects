@@ -35,9 +35,8 @@ def load_data():
 
 df = load_data()
 
-# =========================================================
-# TEAM MAPPINGS
-# =========================================================
+
+
 
 @st.cache_data
 def build_team_mappings(df):
@@ -50,9 +49,6 @@ def build_team_mappings(df):
 team_to_id = build_team_mappings(df)
 teams = sorted(df['hometeamName'].unique())
 
-# =========================================================
-# FEATURE FUNCTIONS
-# =========================================================
 
 @st.cache_data
 def calculate_elo_ratings(df):
@@ -122,7 +118,7 @@ def get_head_to_head(home, away, df, last_n=10):
 elo_ratings = calculate_elo_ratings(df)
 
 
-st.title("🏀 NBA Game Outcome Predictor")
+st.title("NBA Game Outcome Predictor")
 
 st.divider()
 
@@ -141,9 +137,8 @@ is_playoff = st.checkbox("Is it a Playoff Game")
 
 st.divider()
 
-# =========================================================
-# QUICK STATS PREVIEW (before prediction)
-# =========================================================
+# prev
+
 
 if home and away:
     h2h_wins, h2h_total = get_head_to_head(home, away, df)
@@ -160,9 +155,8 @@ if home and away:
 
 st.divider()
 
-# =========================================================
 # PREDICTION
-# =========================================================
+
 
 if st.button("Predict Winner", use_container_width=True, type="primary"):
 
@@ -206,14 +200,13 @@ if st.button("Predict Winner", use_container_width=True, type="primary"):
     home_prob = probabilities[1]
     away_prob = probabilities[0]
 
-    # =========================================================
     # RESULTS
-    # =========================================================
+
 
     winner_name = home if prediction == 1 else away
     st.success(f"Predicted Winner: **{winner_name}**")
 
-    # Confidence indicator
+    # CPodemos tirar this 
     confidence = max(home_prob, away_prob)
     if confidence >= 0.70:
         st.info("High confidence prediction")
@@ -261,6 +254,6 @@ if st.button("Predict Winner", use_container_width=True, type="primary"):
         st.divider()
         st.subheader("Head-to-Head History (last 10 games)")
         away_h2h_wins = h2h_total - h2h_wins
-        st.write(f"**{home}** won **{h2h_wins}** of their last {h2h_total} matchups against **{away}** ({away_h2h_wins} wins for {away})")
+        st.write(f"**{home}** won **{h2h_wins}** of their last {h2h_total} matchups against **{away}**")
     else:
         st.info("No head-to-head history available between these teams.")

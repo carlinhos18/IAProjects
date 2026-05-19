@@ -12,8 +12,10 @@ Carlos Cristelo 202307628
 Windows:
 
 ``` bash
-cd P2/src
 pip install -r requirements.txt
+cd P2/src
+python .\train.py
+streamlit run .\app.py
 ```
 Nix:
 
