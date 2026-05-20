@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import joblib
-
+import plotly.express as px
 from collections import defaultdict
 from scipy.sparse import hstack, csr_matrix
 
@@ -232,8 +232,8 @@ model1 = RandomForestClassifier(
 
 model2 = GradientBoostingClassifier(
     n_estimators=300,
-    max_depth=5, 
-    min_samples_split=5,
+    learning_rate=0.05,
+    subsample=0.8,
     random_state=42
 )
 
@@ -253,8 +253,10 @@ models = {
 }
 
 #model.fit(X_train, y_train)
-trained_models = {}
+trained_models = {
+}
 
+model_metrics=[]
 for name, model in models.items():
     model.fit(X_train, y_train)
     trained_models[name] = model
@@ -262,12 +264,18 @@ for name, model in models.items():
 
 #Avalir modelo
 
-for name, model in trained_models:
+for name, model in trained_models.items():
 
     print(f"{name} predictions:")
     predictions = model.predict(X_test)
 
     accuracy = accuracy_score(y_test, predictions)
+
+    report = classification_report(
+        y_test,
+        predictions,
+        output_dict=True
+    )
 
     print("\nAccuracy:")
     print(accuracy)
@@ -278,6 +286,13 @@ for name, model in trained_models:
     print("\nConfusion Matrix:")
     print(confusion_matrix(y_test, predictions))
 
+    model_metrics.append({
+        "Model": name,
+        "Accuracy": accuracy,
+        "Precision": report["1"]["precision"],
+        "Recall": report["1"]["recall"],
+        "F1-Score": report["1"]["f1-score"]
+    })
 #Isto é para a UI
 #Basciamente perguntamos ao modelo que featues é que ele usou para decioes
 feature_importance = pd.DataFrame({
@@ -297,9 +312,12 @@ print(feature_importance.head(20))
 
 #Guardar modelos para meter no app.py
 
-for name, model in trained_models:
+for name, model in trained_models.items():
     joblib.dump(model, f"../models/{name}_nba_model.pkl")
+metrics_df = pd.DataFrame(model_metrics)
 
+joblib.dump(metrics_df, "../models/model_metrics.pkl")
+joblib.dump(feature_importance, "../models/feature_importance.pkl")
 
 
 joblib.dump(team_encoder, "../models/team_encoder.pkl")
