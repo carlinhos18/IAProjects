@@ -2,9 +2,11 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
+from pathlib import Path
 
 from collections import defaultdict
 from scipy.sparse import hstack, csr_matrix
+import random
 
 
 
@@ -13,11 +15,16 @@ st.set_page_config(
     layout="centered"
 )
 
+BASE_DIR = Path(__file__).resolve().parent
+MODEL_PATH = BASE_DIR.parent / "models" / "Random_Forest_nba_model.pkl"
+ENCODER_PATH = BASE_DIR.parent / "models" / "team_encoder.pkl"
+DATA_PATH = BASE_DIR.parent / "datasets" / "Games.csv"
+
 
 @st.cache_resource
 def load_artifacts():
-    model = joblib.load("../models/nba_model.pkl")
-    encoder = joblib.load("../models/team_encoder.pkl")
+    model = joblib.load(MODEL_PATH)
+    encoder = joblib.load(ENCODER_PATH)
     return model, encoder
 
 model, encoder = load_artifacts()
@@ -25,7 +32,7 @@ model, encoder = load_artifacts()
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv("../datasets/Games.csv")
+    df = pd.read_csv(DATA_PATH)
     df['gameDate'] = pd.to_datetime(df['gameDate'])
     df['winner'] = df['winner'].astype(str)
     df['hometeamId'] = df['hometeamId'].astype(str)
@@ -53,7 +60,7 @@ teams = sorted(df['hometeamName'].unique())
 @st.cache_data
 def calculate_elo_ratings(df):
     elo = defaultdict(lambda: 1500)
-    for _, row in df.iterrows():
+    for _, row in df.iterrows():    
         home_team = row['hometeamName']
         away_team = row['awayteamName']
         winner = row['winner']
@@ -257,3 +264,178 @@ if st.button("Predict Winner", use_container_width=True, type="primary"):
         st.write(f"**{home}** won **{h2h_wins}** of their last {h2h_total} matchups against **{away}**")
     else:
         st.info("No head-to-head history available between these teams.")
+
+
+st.divider()
+
+# Season simulation / artificial data demo
+st.header("Season Simulation & Comparison")
+st.write("Generate an artificial season using model probabilities and compare to the actual season from the dataset.")
+
+
+@st.cache_data
+def compute_features_for_df(df):
+    # replicate feature engineering from training to build numeric features per game
+    team_stats = {}
+    recent_results = defaultdict(list)
+    win_streaks = defaultdict(int)
+    elo_local = defaultdict(lambda: 1500)
+
+    home_winrates = []
+    away_winrates = []
+    home_recent_form = []
+    away_recent_form = []
+    home_elo = []
+    away_elo = []
+    home_streak = []
+    away_streak = []
+    is_playoff_list = []
+
+    for _, row in df.iterrows():
+        home = row['hometeamName']
+        away = row['awayteamName']
+        home_id = row['hometeamId']
+        away_id = row['awayteamId']
+        winner = row['winner']
+
+        if home not in team_stats:
+            team_stats[home] = {'wins': 0, 'games': 0}
+        if away not in team_stats:
+            team_stats[away] = {'wins': 0, 'games': 0}
+
+        home_games = team_stats[home]['games']
+        away_games = team_stats[away]['games']
+        home_wins = team_stats[home]['wins']
+        away_wins = team_stats[away]['wins']
+
+        home_wr = (home_wins / home_games) if home_games > 0 else 0.5
+        away_wr = (away_wins / away_games) if away_games > 0 else 0.5
+
+        home_winrates.append(home_wr)
+        away_winrates.append(away_wr)
+
+        home_history = recent_results[home][-5:]
+        away_history = recent_results[away][-5:]
+        home_weights = np.arange(1, len(home_history) + 1)
+        away_weights = np.arange(1, len(away_history) + 1)
+
+        home_form = (np.average(home_history, weights=home_weights) if home_history else 0.5)
+        away_form = (np.average(away_history, weights=away_weights) if away_history else 0.5)
+
+        home_recent_form.append(home_form)
+        away_recent_form.append(away_form)
+
+        home_streak.append(win_streaks[home])
+        away_streak.append(win_streaks[away])
+
+        home_rating = elo_local[home]
+        away_rating = elo_local[away]
+        home_elo.append(home_rating)
+        away_elo.append(away_rating)
+
+        is_playoff_list.append(1 if row.get('gameType', '') == 'Playoffs' else 0)
+
+        # update counts
+        team_stats[home]['games'] += 1
+        team_stats[away]['games'] += 1
+
+        expected_home = 1 / (1 + 10 ** ((away_rating - home_rating) / 400))
+        actual_home = 1 if winner == home_id else 0
+        elo_local[home] += 32 * (actual_home - expected_home)
+        elo_local[away] += 32 * (((1 - actual_home) - (1 - expected_home)))
+
+        # update results
+        if winner == home_id:
+            team_stats[home]['wins'] += 1
+            recent_results[home].append(1)
+            recent_results[away].append(0)
+            win_streaks[home] += 1
+            win_streaks[away] = 0
+        else:
+            team_stats[away]['wins'] += 1
+            recent_results[home].append(0)
+            recent_results[away].append(1)
+            win_streaks[away] += 1
+            win_streaks[home] = 0
+
+    df_out = df.copy()
+    df_out['home_winrate'] = home_winrates
+    df_out['away_winrate'] = away_winrates
+    df_out['home_recent_form'] = home_recent_form
+    df_out['away_recent_form'] = away_recent_form
+    df_out['home_elo'] = home_elo
+    df_out['away_elo'] = away_elo
+    df_out['home_streak'] = home_streak
+    df_out['away_streak'] = away_streak
+    df_out['is_playoff'] = is_playoff_list
+    df_out['target'] = (df_out['winner'] == df_out['hometeamId']).astype(int)
+    return df_out
+
+
+def build_X_from_df(df_feat):
+    team_feats = encoder.transform(df_feat[['hometeamName', 'awayteamName']])
+    numeric_cols = [
+        'home_winrate','away_winrate','home_recent_form','away_recent_form',
+        'is_playoff','home_streak','away_streak','home_elo','away_elo'
+    ]
+    numeric = csr_matrix(df_feat[numeric_cols].values)
+    return hstack([team_feats, numeric])
+
+
+if st.button("Simulate Season (artificial)", use_container_width=True):
+    with st.spinner("Computing simulation..."):
+        df_feat = compute_features_for_df(df)
+        X_all = build_X_from_df(df_feat)
+
+        # deterministic predictions
+        probs = model.predict_proba(X_all)
+        home_probs = probs[:, 1]
+        preds = model.predict(X_all)
+
+        # simulated season by sampling according to model probabilities
+        simulated_wins = defaultdict(int)
+        predicted_wins = defaultdict(int)
+        actual_wins = defaultdict(int)
+
+        for i, row in df_feat.iterrows():
+            home = row['hometeamName']
+            away = row['awayteamName']
+            home_id = row['hometeamId']
+            away_id = row['awayteamId']
+
+            prob = float(home_probs[i])
+            # deterministic predicted winner
+            if preds[i] == 1:
+                predicted_wins[home] += 1
+            else:
+                predicted_wins[away] += 1
+
+            # simulation (random draw)
+            draw = random.random()
+            if draw < prob:
+                simulated_wins[home] += 1
+            else:
+                simulated_wins[away] += 1
+
+            # actual
+            if row['target'] == 1:
+                actual_wins[home] += 1
+            else:
+                actual_wins[away] += 1
+
+        teams_all = sorted(list(set(list(actual_wins.keys()) + list(predicted_wins.keys()) + list(simulated_wins.keys()))))
+        table_rows = []
+        for t in teams_all:
+            table_rows.append({
+                'team': t,
+                'actual_wins': actual_wins.get(t, 0),
+                'predicted_wins': predicted_wins.get(t, 0),
+                'simulated_wins': simulated_wins.get(t, 0),
+                'diff_sim_actual': simulated_wins.get(t, 0) - actual_wins.get(t, 0)
+            })
+
+        results_df = pd.DataFrame(table_rows).sort_values('diff_sim_actual', key=abs, ascending=False)
+
+        st.subheader("Season Comparison (top differences)")
+        st.dataframe(results_df.head(30), use_container_width=True)
+        st.download_button("Download full comparison CSV", results_df.to_csv(index=False), file_name="season_comparison.csv")
