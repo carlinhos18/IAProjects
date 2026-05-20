@@ -262,7 +262,7 @@ for name, model in models.items():
 
 #Avalir modelo
 
-for name, model in trained_models:
+for name, model in trained_models.items():
 
     print(f"{name} predictions:")
     predictions = model.predict(X_test)
@@ -297,7 +297,7 @@ print(feature_importance.head(20))
 
 #Guardar modelos para meter no app.py
 
-for name, model in trained_models:
+for name, model in trained_models.items():
     joblib.dump(model, f"../models/{name}_nba_model.pkl")
 
 
