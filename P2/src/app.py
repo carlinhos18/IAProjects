@@ -174,9 +174,8 @@ st.success(
 
 st.divider()
 
-# =========================
-# MODEL SELECTION  (movido para ANTES do gráfico de importâncias)
-# =========================
+
+
 
 selected_model = st.selectbox(
     "Choose Prediction",
@@ -292,12 +291,7 @@ if st.button("Predict Winner", use_container_width=True, type="primary"):
     st.success(f"Predicted Winner: **{winner_name}**")
 
     confidence = max(home_prob, away_prob)
-    """if confidence >= 0.70:
-        st.info("High confidence prediction")
-    elif confidence >= 0.55:
-        st.info("Moderate confidence prediction")
-    else:
-        st.warning("Low confidence prediction — this is a very close matchup") """
+
 
     st.divider()
 
