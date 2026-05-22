@@ -20,8 +20,10 @@ python -m streamlit run .\app.py
 Nix:
 
 ``` bash
-cd P2/src
 ./requirements_nix.sh
+cd P2/src
+python .\train.py
+streamlit run .\app.py
 ```
 
 
