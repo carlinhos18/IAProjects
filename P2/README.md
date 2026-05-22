@@ -22,8 +22,8 @@ Nix:
 ``` bash
 ./requirements_nix.sh
 cd P2/src
-python .\train.py
-streamlit run .\app.py
+python3 train.py
+streamlit run app.py
 ```
 
 

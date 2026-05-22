@@ -5,5 +5,6 @@ nix-shell -p python313Packages.scikit-learn \
     python313Packages.livereload \
     python313Packages.plotly \
     python313Packages.joblib \
-     python313Packages.scipy
+     python313Packages.scipy \
+     python313Packages.streamlit
 
