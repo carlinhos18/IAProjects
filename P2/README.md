@@ -61,7 +61,7 @@ O problema: as decisões actuais dependem da experiência do treinador e de esta
 Os dados combinam jogos reais com jogos sintéticos:
 
 - **`datasets/Games.csv`** - 70 mil linhas de partidas reais de jogos NBA
-- **`datasets/GamesFake.csv`** - gerado por `P2/src/data.py`, que amostra equipas reais, simula pontuações com base nas distribuições históricas (média +- desvio padrão) e atribui datas entre 2027/28.
+- **`datasets/GamesFake.csv`** - gerado por `src/data.py`, que amostra equipas reais, simula pontuações com base nas distribuições históricas (média +- desvio padrão) e atribui datas entre 2027/28.
 <!-- 
 > **Nota anti-leakage:** os dados são ordenados cronologicamente antes de qualquer divisão treino/teste. As features de cada jogo são calculadas apenas com informação *anterior* a esse jogo. -->
 
@@ -227,7 +227,7 @@ pip install -r requirements.txt
 ### 2. Gerar dados sintéticos
 
 ```bash
-cd P2/src
+cd src
 python data.py
 ```
 
@@ -242,7 +242,7 @@ python train.py
 ### 4.Correr a app
 
 ```bash
-streamlit run P2/src/streamlit_app.py
+streamlit run src/streamlit_app.py
 ```
 
 ---
