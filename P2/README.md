@@ -13,7 +13,7 @@ Windows:
 
 ``` bash
 pip install -r requirements.txt
-cd P2/src
+cd src
 python .\train.py
 python -m streamlit run .\app.py
 ```
@@ -21,7 +21,7 @@ Nix:
 
 ``` bash
 ./requirements_nix.sh
-cd P2/src
+cd src
 python3 train.py
 streamlit run app.py
 ```
