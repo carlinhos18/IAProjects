@@ -181,10 +181,10 @@ rf_importance = pd.DataFrame({
     "Importance": model1.feature_importances_,
 }).sort_values(by="Importance", ascending=False)
 ```
-![image1](results\plots\feature_importance_gradient_boosting.png "Top 15 features Gradient Boosting")
+![image1](results/plots/feature_importance_gradient_boosting.png "Top 15 features Gradient Boosting")
 <br>
 
-![none](results\plots\feature_importance_random_forest.png "Top 15 features Random Forest")
+![image2](results/plots/feature_importance_random_forest.png "Top 15 features Random Forest")
 
 O Random Forest deu maior importância ao home_elo e away_elo porque o ELO representa a força global das equipas ao longo do tempo. Como este modelo cria árvores de decisão, o ELO torna-se útil para separar equipas fortes de equipas fracas.<br>
 O Gradient Boosting também utilizou principalmente o ELO, pois este modelo aprende iterativamente os padrões que melhor reduzem o erro. Como o ELO está fortemente relacionado com a probabilidade de vitória, o modelo usa esta feature durante o treino.
@@ -208,7 +208,7 @@ feature_names = list(team_feature_names) + numeric_feature_names
 ```
 
 
-![none](results\plots\feature_importance_logistic_regression.png "Top 15 features Logistic Regression")
+![image3](results/plots/feature_importance_logistic_regression.png "Top 15 features Logistic Regression")
 
 <p> A Logistic Regression destacou o away_winrate e a equipa "Nationals" porque é um modelo linear que aprende coeficientes diretamente para cada feature. Sendo que away_winrate tem forte relação com o resultado, enquanto "Nationals" surgiu devido ao One-Hot Encoding. Como o modelo é sensivel a correlações diretas, equipas com padrões estatísticos muito consistentes  recebem coeficientes elevados.
 ---
