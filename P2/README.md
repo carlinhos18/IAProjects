@@ -15,7 +15,7 @@ Windows:
 pip install -r requirements.txt
 cd P2/src
 python .\train.py
-streamlit run .\app.py
+python -m streamlit run .\app.py
 ```
 Nix:
 
@@ -181,7 +181,7 @@ rf_importance = pd.DataFrame({
     "Importance": model1.feature_importances_,
 }).sort_values(by="Importance", ascending=False)
 ```
-![none](results\plots\feature_importance_gradient_boosting.png "Top 15 features Gradient Boosting")
+![image1](results\plots\feature_importance_gradient_boosting.png "Top 15 features Gradient Boosting")
 <br>
 
 ![none](results\plots\feature_importance_random_forest.png "Top 15 features Random Forest")
@@ -210,7 +210,7 @@ feature_names = list(team_feature_names) + numeric_feature_names
 
 ![none](results\plots\feature_importance_logistic_regression.png "Top 15 features Logistic Regression")
 
-A Logistic Regression destacou o away_winrate e a equipa "Nationals" porque é um modelo linear que aprende coeficientes diretamente para cada feature. Sendo que away_winrate tem forte relação com o resultado, enquanto "Nationals" surgiu devido ao One-Hot Encoding. Como o modelo é sensivel a correlações diretas, equipas com padrões estatísticos muito consistentes  recebem coeficientes elevados.
+<p> A Logistic Regression destacou o away_winrate e a equipa "Nationals" porque é um modelo linear que aprende coeficientes diretamente para cada feature. Sendo que away_winrate tem forte relação com o resultado, enquanto "Nationals" surgiu devido ao One-Hot Encoding. Como o modelo é sensivel a correlações diretas, equipas com padrões estatísticos muito consistentes  recebem coeficientes elevados.
 ---
 
 ## Como Correr
